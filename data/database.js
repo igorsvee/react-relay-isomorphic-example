@@ -8,13 +8,7 @@ export default   (db) => {
         .find({_id: new ObjectID(id)})
         .limit(1)
         .next();
-    //     ;
-    // console.log("cursor: %O", cursor)
-    //
-    // console.log("cursor: hasNext() " + cursor.hasNext())
-    // const obj = cursor.next();
-    // console.log("cursor NEXT: %O", obj)
-    // return obj;
+
   }
 
   return {

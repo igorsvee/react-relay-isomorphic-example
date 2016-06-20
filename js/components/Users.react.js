@@ -6,15 +6,13 @@ import CreateUserMutation from '../mutations/CreateUserMutation'
 
 import User from './User.react'
 
+import autobind from 'autobind-decorator'
+
+@autobind
 class Users extends React.Component {
 
-  constructor(props) {
-    super(props);
-
-    this.renderUsers = this.renderUsers.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.clearInputFields = this.clearInputFields.bind(this);
-
+  constructor(props,context) {
+    super(props,context);
   }
 
   renderUsers() {
@@ -53,11 +51,14 @@ class Users extends React.Component {
 
   render() {
     const {relay} = this.props;
-
+        console
     return (
         <div>
-          <h2>Users</h2>
-          {relay.hasOptimisticUpdate(this.props.store) && <h2>Creating...</h2>}
+          <h2>Users {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
+         
+          
+
+
           <form onSubmit={this.handleSubmit}>
             <input ref="username" type="text" placeholder="username"/>
             <input ref="password" type="text" placeholder="pass"/>
@@ -79,6 +80,9 @@ class Users extends React.Component {
               <th>
                 address
               </th>
+              <th>
+                activated?
+              </th>
             </tr>
             </thead>
             <tbody>
@@ -94,7 +98,7 @@ class Users extends React.Component {
 Users = Relay.createContainer(Users, {
   initialVariables: {
     limit: 100 //todo find out why it hardcodes
-    , query: ''//todo find out why it hardcodes
+    
   },
   //  todo a store fragment will give us this.props.-> store <- this store prop
 

@@ -15,7 +15,6 @@ app.use(cors());
   try {
     //  hardcoded pass
     let db = await MongoClient.connect("mongodb://root:1234@ds015849.mlab.com:15849/rgrs")
-    console.log("here 1")
 
     // let schema = Schema(db)
     let schema = UserSchema(db);

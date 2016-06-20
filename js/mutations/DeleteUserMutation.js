@@ -1,6 +1,6 @@
 import Relay from 'react-relay';
 
-    
+
 class DeleteUserMutation extends Relay.Mutation {
   getMutation() {
     return Relay.QL`
@@ -14,6 +14,7 @@ class DeleteUserMutation extends Relay.Mutation {
       id: this.props.userId
     }
   }
+
   // Instead of the server specifying what is returned, the client needs to ask for what it wants
   // Instead of declaring exactly what data you want via a fragment, Relay tries to figure out the minimal amount of data you need in order to update your local graph.
   getFatQuery() {
@@ -47,10 +48,14 @@ class DeleteUserMutation extends Relay.Mutation {
   getOptimisticUpdate() {
     return {
       store: {
-        id: this.props.store.id      ,
-        //todo not working yet
+        id: this.props.store.id,
+
         userConnection: {
-          edges: this.props.store.userConnection.edges.filter((userEdge) => userEdge.node.id !== this.props.id)
+          edges: this.props.store.userConnection.edges.filter((userEdge) => {
+            console.log("userEdge.node.id === this.props.userId:" + (userEdge.node.id === this.props.userId))
+
+            return userEdge.node.id !== this.props.userId
+          })
         }
 
       }

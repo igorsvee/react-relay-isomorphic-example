@@ -46,9 +46,9 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await UserDao.getUserById(id); //  toArray()
+            const userDb = await UserDao.getUserById(id);
 
-            const user = new User(userDb[0]);
+            const user = new User(userDb);
 
             console.log(user);
             // console.log(user._id)
@@ -144,6 +144,11 @@ const UserSchema = (db) => {
         type: GraphQLString,
         resolve: (obj) => obj.address
       }
+      ,
+      activated: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        resolve: (obj) => obj.activated
+      }
 
 
     },
@@ -170,7 +175,7 @@ const UserSchema = (db) => {
       //todo appears on the left in the graphiql
       userEdge: {
         type: userConnection.edgeType,
-        // receives obj from below          insertedCount
+        // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         resolve: (obj) => ({node: obj.ops[0], cursor: obj.insertedId})
@@ -189,7 +194,7 @@ const UserSchema = (db) => {
     , mutateAndGetPayload: ({username, address, password}) => {
       console.log("inserting: " + {username, address, password})
       //  we nee dot return a promise
-      return db.collection("users").insertOne({username, address, password});
+      return db.collection("users").insertOne({username, address, password,activated:false});
     }
   })
 
@@ -204,9 +209,10 @@ const UserSchema = (db) => {
       userId: {
         type: new GraphQLNonNull(GraphQLID),
         resolve: (obj) => {
-          // console.log("userId:obj.value._id: " + obj.value._id)
-          return ({userId:obj.value._id})
-      
+          console.log("userId:obj.value._id: " + obj.value._id)
+          const relayId = toGlobalId('User',obj.value._id )
+          console.log("relayId "+relayId)
+          return (relayId)
         }
       } ,
       userEdge: {
@@ -307,6 +313,51 @@ const UserSchema = (db) => {
     }
   })
 
+  let toggleUserActivatedMutation = mutationWithClientMutationId({
+    name: 'ToggleUserActivated',
+
+    inputFields: {
+      id: {type: new GraphQLNonNull(GraphQLID)},
+      activated: {type: new GraphQLNonNull(GraphQLBoolean)}
+    },
+
+    //  after mutation
+    outputFields: {
+      //todo its a description of the query on the left
+      userEdge: {
+        type: userConnection.edgeType,
+        //todo receives obj from result of the mongodb operation below
+        resolve: (obj) => {
+          return ({node: obj.value, cursor: obj.value._id})
+        }
+      }
+
+      //  user connections are rendered under the store type
+      ,
+      store: {
+        type: GraphQLStore,
+        resolve: () => store
+
+      }
+    }
+
+
+    , mutateAndGetPayload: ({id,activated}) => {
+      const realObjId = fromGlobalId(id).id;
+
+      return db.collection("users")
+          .findOneAndUpdate(
+              {_id: new ObjectID(realObjId)}
+              , {$set: {activated}}
+              , {
+                returnNewDocument: true
+                , returnOriginal: false
+              }
+          );
+
+    }
+
+  })
 
   return new GraphQLSchema({
     query: new GraphQLObjectType({
@@ -326,7 +377,8 @@ const UserSchema = (db) => {
       fields: ()=>({
         createUser: createUserMutation,
         updateUser: updateUserMutation,
-        removeUser: removeUserMutation
+        removeUser: removeUserMutation,
+        toggleUserActivated: toggleUserActivatedMutation
       })
 
     })

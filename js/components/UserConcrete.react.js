@@ -33,38 +33,12 @@ class UserConcrete extends React.Component {
   componentWillMount() {
     this.updateUserStateFromProps(this.props)
 
-    // if (this.props.store.userConnection != null) {
-    //   this.setState({
-    //     username: this.getUserNodeFromProps().username,
-    //     address: this.getUserNodeFromProps().address
-    //   })
-    // }
-
   }
 
   usersEqualStateAndProps() {
     const user = this.getUserNodeFromProps(this.props);
     return this.state.username == user.username && this.state.address == user.address
   }
-
-  componentDidMount() {
-    // this.props.relay.forceFetch();
-    // setTimeout(() =>{
-    //     console.log('setting... '+this.props.relay.route.params.userId)
-    //   this.props.relay.setVariables({
-    //         userId: this.props.relay.route.params.userId
-    //       }
-    //       , (readyState) => {       // this gets called twice https://goo.gl/ZsQ3Dy
-    //         if (readyState.done) {
-    //           this.props.relay.forceFetch();
-    //         }
-    //       }
-    //   );
-    //
-    // },2)
-  }
-
-  console
 
   turnOnEditMode() {
     this.setState({
@@ -131,10 +105,6 @@ class UserConcrete extends React.Component {
 
   }
 
-  // usernameChanged(){
-  //   return this.state.username === this.getUserNodeFromProps(this.props).username 
-  // }
-
   propertyChanged(propName) {
     return this.state[propName] !== this.getUserNodeFromProps(this.props)[propName]
   }
@@ -160,10 +130,8 @@ class UserConcrete extends React.Component {
 
     const userStoreNode = this.getUserNodeFromProps(this.props);
 
-    //  won't change, using this
+    //  won't change, using it
     const id = userStoreNode.id;
-    //
-
 
     //  for optimistic comparison
     const userBeforeUpdate = {id, username : userStoreNode.username, address: userStoreNode.address}
@@ -278,7 +246,8 @@ UserConcrete = Relay.createContainer(UserConcrete, {
                   username,
                   id,
                   password,
-                  address
+                  address,
+                  activated
                   }
           }
        }
