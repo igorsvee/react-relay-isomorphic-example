@@ -11,14 +11,18 @@ import UserApp from './components/UserApp.react';
 
 export default (
     <Route path="/" component={UserApp} queries={StoreQueries}>
+
       <Route path="users" component={Users} queries={StoreQueries}/>
 
-      <Route path="users/:userId" render={({ props }) => {
+      <Route path="users/:userId"
+             render={({ props ,routerProps}) => {
             console.log("Route props? %O ",props) ;
-            // todo maybe pass flag props=exist as a prop  instead of plain text rendering 
-      return props ? <UserConcrete {...props} /> : <h2>loading</h2>
+            console.log("routerProps props? %O ",routerProps) ;
+      return <UserConcrete {...props} />
+            }}
+             component={UserConcrete} queries={ConcreteUserQueries}/>
 
-      }} component={UserConcrete} queries={ConcreteUserQueries}/>
+
     </Route>
 );
 

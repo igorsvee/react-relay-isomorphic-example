@@ -13,7 +13,6 @@ import autobind from 'autobind-decorator'
 @autobind
 class UserConcrete extends React.Component {
 
-
   constructor(props, context) {
     super(props, context);
 
@@ -29,9 +28,29 @@ class UserConcrete extends React.Component {
 
   }
 
+  //todo refractor
   //todo not using constructor intentionally
   componentWillMount() {
-    this.updateUserStateFromProps(this.props)
+    //  injected from react-router
+    if (this.hasRequiredPropsFromRouter()) {
+      this.updateUserStateFromProps(this.props)
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (!this.hasRequiredPropsFromRouter()) {
+      //  1st render with injected router props
+      this.updateUserStateFromProps(nextProps)
+      console.warn("componentWillReceiveProps PROPS %O ", nextProps)
+      this.componentWillReceiveProps = function (nextProps) {
+        if (this.hasRequiredPropsFromRouter() && (this.props.store.userConnection != nextProps.store.userConnection)) {
+          console.log("user has changed ")
+          this.updateUserStateFromProps(nextProps)
+        }
+      }
+
+    }
+
 
   }
 
@@ -44,6 +63,10 @@ class UserConcrete extends React.Component {
     this.setState({
       editMode: true
     })
+  }
+
+  hasRequiredPropsFromRouter() {
+    return this.props.userId != null;
   }
 
   renderUserContent(user) {
@@ -113,16 +136,6 @@ class UserConcrete extends React.Component {
     return props.store.userConnection.edges[0].node;
   }
 
-  applyStateChangesToUser(userFromStore) {
-    return {
-      //  id
-      ...userFromStore
-      //  user's props from the state
-      , username: this.state.username
-      , address: this.state.address
-    };
-
-  }
 
   handleSaveChanges() {
     const username = this.propertyChanged('username') ? this.state.username : undefined;
@@ -134,7 +147,7 @@ class UserConcrete extends React.Component {
     const id = userStoreNode.id;
 
     //  for optimistic comparison
-    const userBeforeUpdate = {id, username : userStoreNode.username, address: userStoreNode.address}
+    const userBeforeUpdate = {id, username: userStoreNode.username, address: userStoreNode.address}
 
     console.log("Saving %O...", {username, address, id});
 
@@ -143,7 +156,7 @@ class UserConcrete extends React.Component {
             {
               username, id, address
               , storeId: this.props.store.id
-              ,userBeforeUpdate
+              , userBeforeUpdate
             }
         )
         , {
@@ -177,28 +190,20 @@ class UserConcrete extends React.Component {
     this.turnOffEditMode();
   }
 
-  componentWillReceiveProps(nextProps) {
-    console.log("this.props %O, nextProps %O", this.props, nextProps)
-    if (this.props.store.userConnection != nextProps.store.userConnection) {
-      console.log("user has changed ")
-      this.updateUserStateFromProps(nextProps)
-    }
-
-  }
-
 
   render() {
-    // const userConnection = this.props.store.userConnection;
-    // if (!userConnection) {
-    //   return (<h3>No user.Wait... {this.props.relay.route.params.userId} {this.props.relay.variables.userId}</h3>)
-    // }
+    if (!this.hasRequiredPropsFromRouter()) {
+      return <h1>Loading...</h1>
+    }
+
     const {relay} = this.props;
 
     const userDb = this.getUserNodeFromProps(this.props);
+
     return (
         <div>
           <h1>Concrete page for {userDb.username}:</h1>
-          {relay.hasOptimisticUpdate(this.props.store) && <h2>Updating.e..</h2>}
+          {relay.hasOptimisticUpdate(this.props.store) && <h2>Updating...</h2>}
           <table>
             <tr>
               <td>
@@ -243,11 +248,11 @@ UserConcrete = Relay.createContainer(UserConcrete, {
             userConnection(id: $userId, first: 1) {
                 edges{
                   node {
-                  username,
-                  id,
-                  password,
-                  address,
-                  activated
+                    username,
+    id,
+    password,
+    address,
+    activated
                   }
           }
        }
@@ -260,39 +265,11 @@ UserConcrete = Relay.createContainer(UserConcrete, {
   }
 })
 
-
+// ${User.getFragment('user')}
 export default UserConcrete;
-console.log()
 
-
-// UserConcrete = Relay.createContainer(UserConcrete, {
-//   initialVariables: {
-//     userId: ''
-//     // , color: null
-//   },
-//
-//   fragments: {
-//
-//     //   ,console
-// // # This fragment only applies to objects of type 'Store'.
-//     store: ({userId}) => {
-//       // console.eqewqwelog("X %O",x)
-//       return  Relay.QL `
-//       fragment UserFragment on Store {
-//              id,
-//          userConnection(id: $userId, first: 1) {
-//           edges{
-//               node {
-//                ${User.getFragment('user', {userId})}
-//                   }
-//           }
-//        }
-//       }
-//       `
-//
-//     }
-//     ,
-//
-//   }
-// })
-
+// username,
+//     id,
+//     password,
+//     address,
+//     activated
