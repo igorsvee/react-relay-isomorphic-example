@@ -1,56 +1,37 @@
 {
-  "name": "rgrjs",
+  "name": "react-relay-app",
   "version": "1.0.0",
-  "description": "A collection of educational resources about React, GraphQL, and Relay",
+  "description": "",
   "scripts": {
     "start": "webpack-dev-server",
     "server": "./node_modules/.bin/babel-node --presets react,es2015,stage-0 server.js",
     "webpack": "webpack"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rgrjs/rgrjs.com.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/rgrjs/rgrjs.com/issues"
-  },
-  "homepage": "https://github.com/rgrjs/rgrjs.com#readme",
+
+   "author": "Igor Svystkov",
+  "license": "MIT",
+
   "dependencies": {
-
     "history": "^2.1.1",
-
     "jquery": "^2.2.1",
     "kerberos": "0.0.19",
     "lodash": "^4.6.1",
-
-
     "react": "^0.14.3",
     "react-dom": "^0.14.3",
     "react-link-state": "^0.1.2",
     "react-relay": "^0.9.0",
     "react-router": "^2.4.1",
     "react-router-relay": "^0.13.2"
-
-
   },
   "devDependencies": {
-
     "relay-local-schema": "^0.5.0",
-
-
     "mongodb": "^2.1.7",
-
     "cors": "^2.7.1",
     "express": "^4.13.3",
     "express-graphql": "^0.5.3",
     "flux": "^2.1.1",
     "graphql": "^0.6.0",
     "graphql-relay": "^0.4.2",
-
-
-
     "autobind-decorator": "^1.3.3",
     "webpack": "^1.12.1",
     "webpack-dev-server": "^1.12.0",
