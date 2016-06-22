@@ -180,15 +180,15 @@ const UserSchema = (db) => {
           return await paginatedMongodbConnection(db.collection("users"), args)
 
 
-          //  connectionFromPromisedArray(
-          //     db.collection('users')
-          //         .find({})
-          //     // .sort({_id: sort})
-          //         .skip(offset)
-          //         .limit(limit)
-          //         .toArray(),
-          //     args
-          // );
+         // return  connectionFromPromisedArray(
+         //      db.collection('users')
+         //          .find({})
+         //      // .sort({_id: sort})
+         //
+         //          .limit(99999)
+         //          .toArray(),
+         //      args
+         //  );
 
 
           // return connectionFromPromisedArray(cursor, args)
@@ -260,13 +260,15 @@ const UserSchema = (db) => {
     //  after mutation
 
     outputFields: {
-      //todo appears on the left in the graphiql
+    
+      // newUserEdge: {
       userEdge: {
         type: userConnection.edgeType,
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        resolve: (obj) => ({node: obj.ops[0]})
+        // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
+        resolve: (obj) => ({node: obj.ops[0], cursor: obj.insertedId})
 
       }
       //  user connections are rendered under the store type

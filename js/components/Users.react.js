@@ -16,7 +16,7 @@ class Users extends React.Component {
   }
 
   getUsers() {
-    return this.props.store.userConnection.edges.map((edge) => <User store={this.props.store}
+    return this.props.store.userConnection.edgesPaginated.map((edge) => <User store={this.props.store}
                                                                               user={edge.node}/>)
   }
 
@@ -63,7 +63,7 @@ class Users extends React.Component {
     })
     // console.log(this.props.relay.getPendingTransactions(this.props.store));
     // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection));
-    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection.edges));
+    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection.edgesPaginated));
 
 
   }
@@ -71,7 +71,7 @@ class Users extends React.Component {
   componentWillReceiveProps(nextProps) {
     // console.log("this.props.store.userConnection %O", this.props.store.userConnection)
     // console.log("this.props %O, nextProps %O", this.props, nextProps)
-    // console.log("this.props.store.userConnection.edges.length %s nextProps.store.userConnection.edges.length %s", this.props.store.userConnection.edges.length, nextProps.store.userConnection.edges.length)
+    // console.log("this.props.store.userConnection.edgesPaginated.length %s nextProps.store.userConnection.edgesPaginated.length %s", this.props.store.userConnection.edgesPaginated.length, nextProps.store.userConnection.edgesPaginated.length)
   }
 
   handleNextPage() {
@@ -83,7 +83,7 @@ class Users extends React.Component {
   }
 
   getBottomControls() {
-    const usersNotEmpty = this.props.store.userConnection.edges.length == 0;
+    const usersNotEmpty = this.props.store.userConnection.edgesPaginated.length == 0;
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
     console.log("this.props.store.userConnection.pageInfoPaginated %O ",this.props.store.userConnection.pageInfoPaginated)
     //
@@ -108,7 +108,7 @@ class Users extends React.Component {
           <h2>Users
             page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
 
-          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue="999" onChange={this.handleSelectLimit}>
+          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue={this.props.relay.variables.limit}  onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
 
@@ -173,11 +173,11 @@ Users = Relay.createContainer(Users, {
       const query = Relay.QL `
       fragment on Store {
          id
-         userConnection(page: $page, records:$limit,first: 999){
+         userConnection(page: $page, records:$limit){
             pageInfoPaginated{
            hasNextPage,hasPreviousPage
          },
-            edges{
+            edgesPaginated{
                  node{
                    ${User.getFragment('user')}
                  } 
