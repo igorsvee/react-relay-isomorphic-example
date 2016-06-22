@@ -281,7 +281,7 @@ const UserSchema = (db) => {
 
     , mutateAndGetPayload: ({username, address, password}) => {
       console.log("inserting: " + {username, address, password})
-
+      //  we nee dot return a promise
       return db.collection("users").insertOne({username, address, password, activated: false});
     }
   })

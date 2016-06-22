@@ -95,7 +95,7 @@ class Users extends React.Component {
           <h2>Users
             page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
 
-          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue="1" onChange={this.handleSelectLimit}>
+          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue="999" onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
 
@@ -146,7 +146,7 @@ class Users extends React.Component {
 Users = Relay.createContainer(Users, {
 
   initialVariables: {
-    limit: 1,
+    limit: 999,
     page: 1
   },
   //  todo a store fragment will give us this.props.-> store <- this store prop

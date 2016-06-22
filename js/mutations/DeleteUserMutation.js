@@ -45,22 +45,22 @@ class DeleteUserMutation extends Relay.Mutation {
     }];
   }
 
-  getOptimisticUpdate() {
-    return {
-      store: {
-        id: this.props.store.id,
-
-        userConnection: {
-          edges: this.props.store.userConnection.edges.filter((userEdge) => {
-            console.log("userEdge.node.id === this.props.userId:" + (userEdge.node.id === this.props.userId))
-
-            return userEdge.node.id !== this.props.userId
-          })
-        }
-
-      }
-    };
-  }
+  // getOptimisticUpdate() {
+  //   return {
+  //     store: {
+  //       id: this.props.store.id,
+  //
+  //       userConnection: {
+  //         edges: this.props.store.userConnection.edges.filter((userEdge) => {
+  //           console.log("userEdge.node.id === this.props.userId:" + (userEdge.node.id === this.props.userId))
+  //
+  //           return userEdge.node.id !== this.props.userId
+  //         })
+  //       }
+  //
+  //     }
+  //   };
+  // }
 
 }
 
