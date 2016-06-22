@@ -268,7 +268,7 @@ const UserSchema = (db) => {
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
-        resolve: (obj) => ({node: obj.ops[0], cursor: obj.insertedId})
+        resolve: (obj) => ({node: obj.ops[0]})
 
       }
       //  user connections are rendered under the store type
@@ -310,7 +310,8 @@ const UserSchema = (db) => {
         // receives obj from below          insertedCount
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
+        // resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
+        resolve: (obj) => ({node: obj.value})
 
       },
 
@@ -356,7 +357,8 @@ const UserSchema = (db) => {
         type: userConnection.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
-          return ({node: obj.value, cursor: obj.value._id})
+          // return ({node: obj.value, cursor: obj.value._id})
+          return ({node: obj.value})
         }
       }
 
@@ -417,7 +419,8 @@ const UserSchema = (db) => {
         type: userConnection.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
-          return ({node: obj.value, cursor: obj.value._id})
+          // return ({node: obj.value, cursor: obj.value._id})
+          return ({node: obj.value})
         }
       }
 

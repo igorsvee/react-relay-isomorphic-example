@@ -23,8 +23,8 @@ class DeleteUserMutation extends Relay.Mutation {
        fragment on DeleteUserPayload @relay(pattern: true) {
           store{
           userConnection {
-           pageInfo,
-           edges{ node }
+           pageInfoPaginated,
+           edgesPaginated{ node }
           }
           }
        }
@@ -33,17 +33,27 @@ class DeleteUserMutation extends Relay.Mutation {
   }
 
   getConfigs() {
+    console.log("DELETE fields")
     return [{
-      type: 'NODE_DELETE',
-      parentName: 'store',
-      parentID: this.props.store.id,
-      connectionName: 'userConnection',
-
-      //The field name in the server response  that contains the DataID of the deleted node
-      deletedIDFieldName: 'userId',
-
+      type: 'FIELDS_CHANGE',
+      fieldIDs: {
+        store: this.props.store.id
+      }
     }];
   }
+
+  // getConfigs() {
+  //   return [{
+  //     type: 'NODE_DELETE',
+  //     parentName: 'store',
+  //     parentID: this.props.store.id,
+  //     connectionName: 'userConnection',
+  //
+  //     //The field name in the server response  that contains the DataID of the deleted node
+  //     deletedIDFieldName: 'userId',
+  //
+  //   }];
+  // }
 
   // getOptimisticUpdate() {
   //   return {

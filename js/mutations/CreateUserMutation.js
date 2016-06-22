@@ -10,9 +10,6 @@ class CreateUserMutation extends Relay.Mutation {
 
   getVariables() {
     //  prepare variables to be used for the mutation, allows to do some logic on the props before sending them to the server
-    console.log("getVariables storeId "+this.props.store.id)
-    console.log("this.props.username "+this.props.username)
-    //todo doesnt have to be exactly like this in the constructor of   (CreateUserMutation) e.g. story and then story.id fetch manually in here
     return {
       username: this.props.username,
       address: this.props.address,
@@ -23,31 +20,28 @@ class CreateUserMutation extends Relay.Mutation {
   // console
 
   getFatQuery() {
-    console.log("getFatQuery storeId "+this.props.store.id)
     return Relay.QL`
        fragment on CreateUserPayload  {
-        
+            userEdge,
         store {  userConnection    }
        }
        `
   }
 
-  console
+  // console
   getConfigs() {
-    console.log("getConfigs storeId "+this.props.store.id)
     return [{
       type: 'FIELDS_CHANGE',
-
       fieldIDs: {
         store: this.props.store.id
-
       }
     }];
   }
 
-  // console
+  console
   // how to handle response from the server
   // getConfigs() {
+  //   console.log("2 LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOL")
   //   return [{
   //     type: 'RANGE_ADD',
   //     //  comes from fat query
