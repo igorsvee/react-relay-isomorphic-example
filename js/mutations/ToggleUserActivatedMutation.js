@@ -17,13 +17,13 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
     }
 
   }
-
+          console
   //  more explicit one also works
   // store{ userConnection(id: "${this.props.id}", first:1) {    edges{ node }   }     }   }
   getFatQuery() {
     return Relay.QL`
        fragment on ToggleUserActivatedPayload {
-       store{ userConnection(id: "${this.props.userId}", first:1) {   edges{ node { activated } }   }    }   }
+       store{ userConnection(id: "${this.props.userId}", first:1) {   edgesPaginated{ node { activated } }   }    }   }
        `
   }
 
@@ -39,24 +39,24 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
   }
 
 
-  getOptimisticResponse(){
-    return {
-      store:{
-        id : this.props.storeId,
-        userConnection:{
-          edges : {
-            node:{
-              id: this.props.userId,
-              activated: this.props.activated
- 
-            }
-          }
-
-        }
-      }
-
-    }
-  }
+  // getOptimisticResponse(){
+  //   return {
+  //     store:{
+  //       id : this.props.storeId,
+  //       userConnection:{
+  //         edges : {
+  //           node:{
+  //             id: this.props.userId,
+  //             activated: this.props.activated
+  //
+  //           }
+  //         }
+  //
+  //       }
+  //     }
+  //
+  //   }
+  // }
 
 
 }
