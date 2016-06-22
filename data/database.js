@@ -5,7 +5,7 @@ export default   (db) => {
 
   function getUserById(id) {
     return db.collection("users")
-        .find({_id: new ObjectID(id)})
+        .find({_id: id})
         .limit(1)
         .next();
 

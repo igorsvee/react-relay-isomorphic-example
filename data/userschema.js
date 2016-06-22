@@ -15,15 +15,73 @@ import  {
     nodeDefinitions,   // map globally defined ids into actual data objects and their graphql types
     connectionDefinitions,
     connectionArgs,
+    connectionFromArray,
     connectionFromPromisedArray
+    , connectionFromArraySlice
     , mutationWithClientMutationId
 } from 'graphql-relay'
-
 import database from './database';
 import User from '../js/models/User';
-
+import paginatedMongodbConnection, {paginatedDefinitions} from '../js/utils/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
+
+export function toMongoId(relayId) {
+  return new ObjectID(fromGlobalId(relayId).id);
+}
+
+
+function customConnection(obj) {
+  console.log(obj)
+  console.log("yo")
+  console.log(Object.keys(obj.connectionType))
+  console.log(obj.connectionType)
+  console.log("yo 2")
+  console.log(obj.connectionType._typeConfig.fields())
+
+  const currentEdgeType = obj.edgeType;
+
+  let customPageInfoType = new GraphQLObjectType({
+    name: 'PageInfoCustom',
+    description: 'Information about pagination in a connection.',
+    fields: () => ({
+      hasNextPage: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        description: 'When paginating forwards, are there more items?'
+      },
+      hasPreviousPage: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        description: 'When paginating backwards, are there more items?'
+      }
+      ,
+      empty: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        description: 'Result does not contain any items?'
+      }
+
+    })
+  });
+
+
+  // obj.connectionType._typeConfig.fields
+  //
+  //
+  obj.connectionType._typeConfig.fields = () => ({
+    pageInfo: {
+      type: new GraphQLNonNull(customPageInfoType),
+      description: 'Information to aid in pagination.'
+    },
+    edges: {
+      type: new GraphQLList(currentEdgeType),
+      description: 'A list of edges.'
+    },
+    //  omitting thunks
+  })
+
+
+  return obj
+
+}
 
 
 const UserSchema = (db) => {
@@ -36,9 +94,9 @@ const UserSchema = (db) => {
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
       // globalId  => {
-      async function (globalId) {
+      // async function (globalId) {
+      async(globalId) => {
         const {type, id} = fromGlobalId(globalId);
-        // const {type, id} = globalId;
 
         switch (type) {
           case 'Store':
@@ -46,14 +104,12 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await UserDao.getUserById(id);
+            const userDb = await UserDao.getUserById(toMongoId(id));
 
-            const user = new User(userDb);
+            const userEntity = new User(userDb);
 
-            console.log(user);
-            // console.log(user._id)
-
-            return user;
+            console.log(userEntity);
+            return userEntity;
           default:
             return null;
         }
@@ -67,6 +123,7 @@ const UserSchema = (db) => {
         } else if (obj instanceof User) {
           return GraphQLUser;
         } else {
+          console.log("unknown instance %O", obj)
           return null;
         }
       }
@@ -83,33 +140,70 @@ const UserSchema = (db) => {
         //relay helper ,extend it
         args: {
           ...connectionArgs  //first.. last etc
-          // , query: {type: GraphQLString}
+          , id: {type: GraphQLID}
+          , page: {type: GraphQLInt}
+          , records: {type: GraphQLInt}
 
-          , id: {type: GraphQLString}
-          // , id: {type: GraphQLID}
         },
 
-        resolve: (_, args) => {
+        resolve: async(_, args) => {
           let findParams = {};
 
           const {id} = args;
-
+          console.log(args)
           if (id) {
-            const fromId = fromGlobalId(id).id;
-            console.log("fromId " + fromId);
-            findParams._id = new ObjectID(fromId);
-            if (!args.first) {
-              args.first = 1;
-            }
+            // can't be multiple objects with the same id so the limit is set to 1
+            args.limit = 1;
+            findParams._id = toMongoId(id);
+            // if (!args.first) {
+
+            // }
           }
 
-          return connectionFromPromisedArray(
-              db.collection("users")
-                  .find(findParams)
-                  // .sort({createdAt: -1})  //desc
-                  .limit(args.first)
-                  .toArray(),
-              args)
+
+          // let sort = 1;
+          // if(last){
+          //    sort = -1;
+          // }
+
+          // if (after) {
+          //   console.log("HERE")
+          //   const mongoId = toMongoId(after);
+          //   findParams._id = {$gt: mongoId}
+          // }
+
+
+
+          // console.log(Object.keys(connectionDefinitions({
+          //   name: 'User',
+          //   nodeType: GraphQLUser
+          // })))
+          // console.log(connectionDefinitions({
+          //   name: 'User',
+          //   nodeType: GraphQLUser
+          // }))
+
+
+          // console.log(customConnection(connectionDefinitions({
+          //   name: 'User',
+          //   nodeType: GraphQLUser
+          // })))
+
+          return await paginatedMongodbConnection(db.collection("users"), args)
+
+
+          //  connectionFromPromisedArray(
+          //     db.collection('users')
+          //         .find({})
+          //     // .sort({_id: sort})
+          //         .skip(offset)
+          //         .limit(limit)
+          //         .toArray(),
+          //     args
+          // );
+
+
+          // return connectionFromPromisedArray(cursor, args)
         }
       }
 
@@ -160,6 +254,13 @@ const UserSchema = (db) => {
     nodeType: GraphQLUser
   });
 
+  // let userConnection = paginatedDefinitions({
+  //   name: 'User',
+  //   nodeType: GraphQLUser
+  // });
+  
+  
+
   let createUserMutation = mutationWithClientMutationId({
     name: 'CreateUser',
 
@@ -194,7 +295,7 @@ const UserSchema = (db) => {
     , mutateAndGetPayload: ({username, address, password}) => {
       console.log("inserting: " + {username, address, password})
       //  we nee dot return a promise
-      return db.collection("users").insertOne({username, address, password,activated:false});
+      return db.collection("users").insertOne({username, address, password, activated: false});
     }
   })
 
@@ -205,16 +306,16 @@ const UserSchema = (db) => {
     },
 
     outputFields: {
-      
+
       userId: {
         type: new GraphQLNonNull(GraphQLID),
         resolve: (obj) => {
           console.log("userId:obj.value._id: " + obj.value._id)
-          const relayId = toGlobalId('User',obj.value._id )
-          console.log("relayId "+relayId)
+          const relayId = toGlobalId('User', obj.value._id)
+          console.log("relayId " + relayId)
           return (relayId)
         }
-      } ,
+      },
       userEdge: {
         type: userConnection.edgeType,
         // receives obj from below          insertedCount
@@ -223,14 +324,14 @@ const UserSchema = (db) => {
         resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
 
       },
-      
+
       store: {
         type: GraphQLStore,
         resolve: () => store
 
       }
 
- 
+
     }
 
     ,
@@ -245,7 +346,6 @@ const UserSchema = (db) => {
       return db.collection("users")
           .findOneAndDelete(
               {_id: new ObjectID(objId)}
-      
           );
     }
 
@@ -283,7 +383,7 @@ const UserSchema = (db) => {
 
     , mutateAndGetPayload: ({id, username, address, password}) => {
       const realObjId = fromGlobalId(id).id;
-          console.log("id %s username %s address %s password %s ",id,username,address,password)
+      console.log("id %s username %s address %s password %s ", id, username, address, password)
       const setObj = {
         $set: {}
       };
@@ -342,7 +442,7 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: ({id,activated}) => {
+    , mutateAndGetPayload: ({id, activated}) => {
       const realObjId = fromGlobalId(id).id;
 
       return db.collection("users")

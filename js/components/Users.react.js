@@ -11,17 +11,12 @@ import autobind from 'autobind-decorator'
 @autobind
 class Users extends React.Component {
 
-  constructor(props,context) {
-    super(props,context);
+  constructor(props, context) {
+    super(props, context);
   }
 
-  renderUsers() {
-    return this.props.store.userConnection.edges.map((edge) => {
-
-      return (
-          <User  store={this.props.store} user={edge.node}/>
-      )
-    })
+  getUsers() {
+    return this.props.store.userConnection.edges.map((edge) => <User store={this.props.store} user={edge.node}/>)
   }
 
   handleSubmit(e) {
@@ -34,11 +29,9 @@ class Users extends React.Component {
       //parent
       store: this.props.store
     };
-    
-    console.log("creating... %O",user)
-    Relay.Store.commitUpdate(
-        new CreateUserMutation(user)
-    );
+
+    console.log("creating... %O", user);
+    Relay.Store.commitUpdate(new CreateUserMutation(user));
 
     this.clearInputFields();
   }
@@ -49,15 +42,64 @@ class Users extends React.Component {
     this.refs.address.value = "";
   }
 
+  handleSelectLimit(e) {
+    const newLimit = Number(e.target.value);
+    console.log("new newLimit: " + newLimit)
+    this.props.relay.setVariables({limit: newLimit}, (obj) => {
+      console.log("current: %O", obj)
+
+    })
+    // console.log(this.props.relay.getPendingTransactions(this.props.store));
+    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection));
+    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection.edges));
+
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    console.log("this.props %O, nextProps %O", this.props, nextProps)
+    console.log("this.props.store.userConnection.edges.length %s nextProps.store.userConnection.edges.length %s", this.props.store.userConnection.edges.length, nextProps.store.userConnection.edges.length)
+  }
+
+  handleNextPage() {
+      this.props.relay.setVariables({page: this.props.relay.variables.page + 1})
+  }
+
+  handlePrevPage() {
+      this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
+  }
+
+  getBottomControls() {
+    const usersNotEmpty = this.props.store.userConnection.edges.length == 0;
+    const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfo;
+    //
+    return (<tfoot>
+    <tr>
+      {hasPreviousPage && <td>
+        <button onClick={this.handlePrevPage}> &larr;</button>
+      </td>}
+      {hasNextPage && <td>
+        <button onClick={this.handleNextPage}> &rarr;</button>
+      </td>}
+    </tr>
+
+    </tfoot>)
+  }
+
   render() {
     const {relay} = this.props;
-        console
+    console.log("this.props in render %O", this.props)
     return (
         <div>
-          <h2>Users {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
-         
-          
+          <h2>Users page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
 
+          Limit: {this.props.relay.variables.page === 1 && <select defaultValue="1" onChange={this.handleSelectLimit}>
+          <option value="1">1</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        }
 
           <form onSubmit={this.handleSubmit}>
             <input ref="username" type="text" placeholder="username"/>
@@ -86,39 +128,51 @@ class Users extends React.Component {
             </tr>
             </thead>
             <tbody>
-            {this.renderUsers()}
+            {this.getUsers()}
+
             </tbody>
 
+            {this.getBottomControls()}
+
           </table>
+
         </div>
     )
   }
 }
-
+console
 Users = Relay.createContainer(Users, {
+
   initialVariables: {
-    limit: 100 //todo find out why it hardcodes
-    
+    limit: 1,
+    page : 1,
+    first: undefined,
+    last: undefined,
+    after: undefined
+    ,before: undefined
   },
   //  todo a store fragment will give us this.props.-> store <- this store prop
 
   fragments: {
-    // and every fragment is a funtion that return a graphql query
+    // and every fragment is a function that return a graphql query
 
     //  todo this.props. store (fragment ignored and then ) .  linkConnection
     //  read the global id from the store bc mutation is using it
     store: () => Relay.QL `
- 
       fragment on Store {
-      id,
-         userConnection(first: $limit){
+         userConnection(page: $page, records: $limit){
+        pageInfo{
+           hasNextPage,hasPreviousPage
+         },
             edges{
                  node{
                    ${User.getFragment('user')}
                  } 
+                 
              }
           
          }
+         
       }
       `
   }
