@@ -39,24 +39,24 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
   }
 
 
-  // getOptimisticResponse(){
-  //   return {
-  //     store:{
-  //       id : this.props.storeId,
-  //       userConnection:{
-  //         edges : {
-  //           node:{
-  //             id: this.props.userId,
-  //             activated: this.props.activated
-  //
-  //           }
-  //         }
-  //
-  //       }
-  //     }
-  //
-  //   }
-  // }
+  getOptimisticResponse(){
+    return {
+      store:{
+        id : this.props.storeId,
+        userConnection:{
+          edgesPaginated : {
+            node:{
+              id: this.props.userId,
+              activated: this.props.activated
+
+            }
+          }
+
+        }
+      }
+
+    }
+  }
 
 
 }
