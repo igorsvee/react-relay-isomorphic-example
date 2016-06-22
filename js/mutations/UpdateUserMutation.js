@@ -45,7 +45,7 @@ class UpdateUserMutation extends Relay.Mutation {
      store:{
        id : this.props.storeId,
        userConnection:{
-         edges : {
+         edgesPaginated : {
            node:{
              id: this.props.id,
              // set to previous values if not updated
