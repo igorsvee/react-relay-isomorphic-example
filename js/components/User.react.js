@@ -100,7 +100,7 @@ User = Relay.createContainer(User, {
     //  needs 3 fields from the User type
     user: () => Relay.QL`
      fragment UserInfo on User{
-     activated,
+       activated,
        username,
        address,
        id

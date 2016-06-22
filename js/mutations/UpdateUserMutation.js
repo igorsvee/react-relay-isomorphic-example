@@ -40,25 +40,25 @@ class UpdateUserMutation extends Relay.Mutation {
   }
 
 
-  // getOptimisticResponse(){
-  //  return {
-  //    store:{
-  //      id : this.props.storeId,
-  //      userConnection:{
-  //        edges : {
-  //          node:{
-  //            id: this.props.id,
-  //            // set to previous values if not updated
-  //            username: this.props.username ? this.props.username : this.props.userBeforeUpdate.username ,
-  //            address: this.props.address ? this.props.address : this.props.userBeforeUpdate.address
-  //          }
-  //        }
-  //
-  //      }
-  //    }
-  //
-  //  }
-  // }
+  getOptimisticResponse(){
+   return {
+     store:{
+       id : this.props.storeId,
+       userConnection:{
+         edges : {
+           node:{
+             id: this.props.id,
+             // set to previous values if not updated
+             username: this.props.username ? this.props.username : this.props.userBeforeUpdate.username ,
+             address: this.props.address ? this.props.address : this.props.userBeforeUpdate.address
+           }
+         }
+
+       }
+     }
+
+   }
+  }
 
 
 }

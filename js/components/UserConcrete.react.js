@@ -237,10 +237,10 @@ UserConcrete = Relay.createContainer(UserConcrete, {
 
   fragments: {
 
-        // console
+    // console
 // # This fragment only applies to objects of type 'Store'.
     store: (obj) => {
-      console.log("obj %O" , obj)
+      console.log("obj %O", obj)
 
       return Relay.QL `
       fragment ff on Store {
@@ -248,10 +248,11 @@ UserConcrete = Relay.createContainer(UserConcrete, {
             userConnection(id: $userId) {
                 edgesPaginated{
                   node {
-             username,
+                     
+username,
     id,
     password,
-     address,
+    address,
     activated
                  
                   }
@@ -268,7 +269,7 @@ UserConcrete = Relay.createContainer(UserConcrete, {
 
 // ${User.getFragment('user')}
 export default UserConcrete;
-
+//
 // username,
 //     id,
 //     password,
