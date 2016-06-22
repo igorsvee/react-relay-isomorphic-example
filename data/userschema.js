@@ -22,13 +22,10 @@ import  {
 } from 'graphql-relay'
 import database from './database';
 import User from '../js/models/User';
-import paginatedMongodbConnection, {paginatedDefinitions} from '../js/utils/paginatedMongodbConnection';
+import paginatedMongodbConnection, {paginatedDefinitions, paginatedArgs} from '../js/utils/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
-
-export function toMongoId(relayId) {
-  return new ObjectID(fromGlobalId(relayId).id);
-}
+import {toMongoId} from '../js/utils/general'
 
 
 function customConnection(obj) {
@@ -139,26 +136,18 @@ const UserSchema = (db) => {
         type: userConnection.connectionType,
         //relay helper ,extend it
         args: {
-          ...connectionArgs  //first.. last etc
-          , id: {type: GraphQLID}
-          , page: {type: GraphQLInt}
-          , records: {type: GraphQLInt}
+          ...connectionArgs,  //first.. last etc
+          ...paginatedArgs
+          // , id: {type: GraphQLID}
+
 
         },
 
         resolve: async(_, args) => {
           let findParams = {};
 
-          const {id} = args;
-          console.log(args)
-          if (id) {
-            // can't be multiple objects with the same id so the limit is set to 1
-            args.limit = 1;
-            findParams._id = toMongoId(id);
-            // if (!args.first) {
-
-            // }
-          }
+          // const {id} = args;
+          // console.log(args)
 
 
           // let sort = 1;
@@ -171,7 +160,6 @@ const UserSchema = (db) => {
           //   const mongoId = toMongoId(after);
           //   findParams._id = {$gt: mongoId}
           // }
-
 
 
           // console.log(Object.keys(connectionDefinitions({
@@ -249,17 +237,16 @@ const UserSchema = (db) => {
     interfaces: [nodeInterface]
   });
 
-  let userConnection = connectionDefinitions({
+  // let userConnection = connectionDefinitions({
+  //   name: 'User',
+  //   nodeType: GraphQLUser
+  // });
+
+  let userConnection = paginatedDefinitions({
     name: 'User',
     nodeType: GraphQLUser
   });
 
-  // let userConnection = paginatedDefinitions({
-  //   name: 'User',
-  //   nodeType: GraphQLUser
-  // });
-  
-  
 
   let createUserMutation = mutationWithClientMutationId({
     name: 'CreateUser',
@@ -279,7 +266,7 @@ const UserSchema = (db) => {
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        resolve: (obj) => ({node: obj.ops[0], cursor: obj.insertedId})
+        resolve: (obj) => ({node: obj.ops[0]})
 
       }
       //  user connections are rendered under the store type
@@ -294,7 +281,7 @@ const UserSchema = (db) => {
 
     , mutateAndGetPayload: ({username, address, password}) => {
       console.log("inserting: " + {username, address, password})
-      //  we nee dot return a promise
+
       return db.collection("users").insertOne({username, address, password, activated: false});
     }
   })

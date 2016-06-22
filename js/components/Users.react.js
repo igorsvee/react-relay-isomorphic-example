@@ -16,7 +16,8 @@ class Users extends React.Component {
   }
 
   getUsers() {
-    return this.props.store.userConnection.edges.map((edge) => <User store={this.props.store} user={edge.node}/>)
+    return this.props.store.userConnection.edges.map((edge) => <User store={this.props.store}
+                                                                              user={edge.node}/>)
   }
 
   handleSubmit(e) {
@@ -62,11 +63,11 @@ class Users extends React.Component {
   }
 
   handleNextPage() {
-      this.props.relay.setVariables({page: this.props.relay.variables.page + 1})
+    this.props.relay.setVariables({page: this.props.relay.variables.page + 1})
   }
 
   handlePrevPage() {
-      this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
+    this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
   }
 
   getBottomControls() {
@@ -88,16 +89,17 @@ class Users extends React.Component {
 
   render() {
     const {relay} = this.props;
-    console.log("this.props in render %O", this.props)
+    // console.log("this.props in render %O", this.props)
     return (
         <div>
-          <h2>Users page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
+          <h2>Users
+            page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
 
-          Limit: {this.props.relay.variables.page === 1 && <select defaultValue="1" onChange={this.handleSelectLimit}>
+          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue="1" onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
+
+          <option value="999">999</option>
         </select>
         }
 
@@ -140,16 +142,12 @@ class Users extends React.Component {
     )
   }
 }
-console
+// console
 Users = Relay.createContainer(Users, {
 
   initialVariables: {
     limit: 1,
-    page : 1,
-    first: undefined,
-    last: undefined,
-    after: undefined
-    ,before: undefined
+    page: 1
   },
   //  todo a store fragment will give us this.props.-> store <- this store prop
 
@@ -160,7 +158,7 @@ Users = Relay.createContainer(Users, {
     //  read the global id from the store bc mutation is using it
     store: () => Relay.QL `
       fragment on Store {
-         userConnection(page: $page, records: $limit){
+         userConnection(page: $page, records:$limit){
         pageInfo{
            hasNextPage,hasPreviousPage
          },

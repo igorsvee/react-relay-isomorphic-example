@@ -245,7 +245,7 @@ UserConcrete = Relay.createContainer(UserConcrete, {
       return Relay.QL `
       fragment ff on Store {
              id,
-            userConnection(id: $userId, first: 1) {
+            userConnection(id: $userId,page: 1,records: 1) {
                 edges{
                   node {
                     username,

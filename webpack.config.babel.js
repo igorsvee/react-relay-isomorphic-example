@@ -48,7 +48,7 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
 
 
-    new webpack.DefinePlugin({"global.GENTLY": false}),
+    // new webpack.DefinePlugin({"global.GENTLY": false}),
 
 
     new HtmlwebpackPlugin({
