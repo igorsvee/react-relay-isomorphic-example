@@ -20,7 +20,12 @@ app.use(cors());
     let schema = UserSchema(db);
     app.use('/graphql', GraphQLHTTP({
       schema,
-      graphiql: true
+      graphiql: true,
+      formatError: error => ({
+        message: error.message,
+        locations: error.locations,
+        stack: error.stack
+      })
     }))
 
     app.listen(3000, () => {

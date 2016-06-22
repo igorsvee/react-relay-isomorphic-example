@@ -27,9 +27,10 @@ module.exports = {
       , {test: /\.json$/, loader: 'json-loader'}
     ]
   }
-  , devtool: 'source-map'
+  , devtool: 'eval-source-map'
   // , devtool: '#eval-cheap-module-source-map'
-  , devServer: {
+  ,
+  devServer: {
     historyApiFallback: true,
     // hot: true,
     inline: true,

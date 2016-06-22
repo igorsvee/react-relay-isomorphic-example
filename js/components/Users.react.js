@@ -23,17 +23,28 @@ class Users extends React.Component {
   handleSubmit(e) {
     e.preventDefault();
 
-    const user = {
+    // const user = {
+    //   username: this.refs.username.value,
+    //   password: this.refs.password.value,
+    //   address: this.refs.address.value,
+    //   //parent
+    //   store: this.props.store
+    // };
+       console.log("this.props.store  submit:%O ",this.props.store)
+    // console.log("creating... %O", user);
+    Relay.Store.commitUpdate(new CreateUserMutation({
       username: this.refs.username.value,
       password: this.refs.password.value,
       address: this.refs.address.value,
-      //parent
-      store: this.props.store
-    };
-
-    console.log("creating... %O", user);
-    Relay.Store.commitUpdate(new CreateUserMutation(user));
-
+      store:this.props.store
+    }));
+    // new UpdateUserMutation(
+    //     {
+    //       username, id, address
+    //       , storeId: this.props.store.id
+    //       , userBeforeUpdate
+    //     }
+    // )
     this.clearInputFields();
   }
 
@@ -58,8 +69,9 @@ class Users extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log("this.props %O, nextProps %O", this.props, nextProps)
-    console.log("this.props.store.userConnection.edges.length %s nextProps.store.userConnection.edges.length %s", this.props.store.userConnection.edges.length, nextProps.store.userConnection.edges.length)
+    // console.log("this.props.store.userConnection %O", this.props.store.userConnection)
+    // console.log("this.props %O, nextProps %O", this.props, nextProps)
+    // console.log("this.props.store.userConnection.edges.length %s nextProps.store.userConnection.edges.length %s", this.props.store.userConnection.edges.length, nextProps.store.userConnection.edges.length)
   }
 
   handleNextPage() {
@@ -72,7 +84,8 @@ class Users extends React.Component {
 
   getBottomControls() {
     const usersNotEmpty = this.props.store.userConnection.edges.length == 0;
-    const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfo;
+    const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
+    console.log("this.props.store.userConnection.pageInfoPaginated %O ",this.props.store.userConnection.pageInfoPaginated)
     //
     return (<tfoot>
     <tr>
@@ -142,7 +155,7 @@ class Users extends React.Component {
     )
   }
 }
-// console
+console
 Users = Relay.createContainer(Users, {
 
   initialVariables: {
@@ -156,10 +169,12 @@ Users = Relay.createContainer(Users, {
 
     //  todo this.props. store (fragment ignored and then ) .  linkConnection
     //  read the global id from the store bc mutation is using it
-    store: () => Relay.QL `
+    store: () => {
+      const query = Relay.QL `
       fragment on Store {
-         userConnection(page: $page, records:$limit){
-        pageInfo{
+         id
+         userConnection(page: $page, records:$limit,first: 999){
+            pageInfoPaginated{
            hasNextPage,hasPreviousPage
          },
             edges{
@@ -172,7 +187,13 @@ Users = Relay.createContainer(Users, {
          }
          
       }
-      `
+      `;
+
+      console.log("query ,%O", query)
+      return query
+
+
+    }
   }
 });
 
