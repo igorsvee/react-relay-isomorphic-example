@@ -41,7 +41,6 @@ class CreateUserMutation extends Relay.Mutation {
   console
   // how to handle response from the server
   // getConfigs() {
-  //   console.log("2 LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOL")
   //   return [{
   //     type: 'RANGE_ADD',
   //     //  comes from fat query
@@ -56,26 +55,26 @@ class CreateUserMutation extends Relay.Mutation {
   //     },
   //   }];
   // }
+             console
+  getOptimisticResponse(){
+    return {
+      store:{
+        id : this.props.store.id,
+        userConnectionPaginated:{
+          edges : {
+            node:{
+              id: 'GENERATING....',
+              username: this.props.username,
+              address: this.props.address ,
+              password: this.props.password
+            }
+          }
 
-  // getOptimisticResponse(){
-  //   return {
-  //     store:{
-  //       id : this.props.store.id,
-  //       userConnectionPaginated:{
-  //         edges : {
-  //           node:{
-  //             id: 'GENERATING....',
-  //             username: this.props.username,
-  //             address: this.props.address ,
-  //             password: this.props.password
-  //           }
-  //         }
-  //
-  //       }
-  //     }
-  //
-  //   }
-  // }
+        }
+      }
+
+    }
+  }
 
 
 }

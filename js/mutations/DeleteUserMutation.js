@@ -33,7 +33,6 @@ class DeleteUserMutation extends Relay.Mutation {
   }
 
   getConfigs() {
-    console.log("DELETE fields")
     return [{
       type: 'FIELDS_CHANGE',
       fieldIDs: {

@@ -133,7 +133,7 @@ class UserConcrete extends React.Component {
   }
 
   getUserNodeFromProps(props) {
-    return props.store.userConnection.edges[0].node;
+    return props.store.userConnection.edgesPaginated[0].node;
   }
 
 
@@ -246,7 +246,7 @@ UserConcrete = Relay.createContainer(UserConcrete, {
       fragment ff on Store {
              id,
             userConnection(id: $userId) {
-                edges{
+                edgesPaginated{
                   node {
              username,
     id,
