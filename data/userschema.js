@@ -28,59 +28,6 @@ var ObjectID = require('mongodb').ObjectID;
 import {toMongoId} from '../js/utils/general'
 
 
-function customConnection(obj) {
-  console.log(obj)
-  console.log("yo")
-  console.log(Object.keys(obj.connectionType))
-  console.log(obj.connectionType)
-  console.log("yo 2")
-  console.log(obj.connectionType._typeConfig.fields())
-
-  const currentEdgeType = obj.edgeType;
-
-  let customPageInfoType = new GraphQLObjectType({
-    name: 'PageInfoCustom',
-    description: 'Information about pagination in a connection.',
-    fields: () => ({
-      hasNextPage: {
-        type: new GraphQLNonNull(GraphQLBoolean),
-        description: 'When paginating forwards, are there more items?'
-      },
-      hasPreviousPage: {
-        type: new GraphQLNonNull(GraphQLBoolean),
-        description: 'When paginating backwards, are there more items?'
-      }
-      ,
-      empty: {
-        type: new GraphQLNonNull(GraphQLBoolean),
-        description: 'Result does not contain any items?'
-      }
-
-    })
-  });
-
-
-  // obj.connectionType._typeConfig.fields
-  //
-  //
-  obj.connectionType._typeConfig.fields = () => ({
-    pageInfo: {
-      type: new GraphQLNonNull(customPageInfoType),
-      description: 'Information to aid in pagination.'
-    },
-    edges: {
-      type: new GraphQLList(currentEdgeType),
-      description: 'A list of edges.'
-    },
-    //  omitting thunks
-  })
-
-
-  return obj
-
-}
-
-
 const UserSchema = (db) => {
   class Store {
   }
@@ -136,62 +83,12 @@ const UserSchema = (db) => {
         type: userConnection.connectionType,
         //relay helper ,extend it
         args: {
-          ...connectionArgs,  //first.. last etc
+          // ...connectionArgs,  //first.. last etc
           ...paginatedArgs
-          // , id: {type: GraphQLID}
-
-
         },
 
         resolve: async(_, args) => {
-          let findParams = {};
-
-          // const {id} = args;
-          // console.log(args)
-
-
-          // let sort = 1;
-          // if(last){
-          //    sort = -1;
-          // }
-
-          // if (after) {
-          //   console.log("HERE")
-          //   const mongoId = toMongoId(after);
-          //   findParams._id = {$gt: mongoId}
-          // }
-
-
-          // console.log(Object.keys(connectionDefinitions({
-          //   name: 'User',
-          //   nodeType: GraphQLUser
-          // })))
-          // console.log(connectionDefinitions({
-          //   name: 'User',
-          //   nodeType: GraphQLUser
-          // }))
-
-
-          // console.log(customConnection(connectionDefinitions({
-          //   name: 'User',
-          //   nodeType: GraphQLUser
-          // })))
-
           return await paginatedMongodbConnection(db.collection("users"), args)
-
-
-         // return  connectionFromPromisedArray(
-         //      db.collection('users')
-         //          .find({})
-         //      // .sort({_id: sort})
-         //
-         //          .limit(99999)
-         //          .toArray(),
-         //      args
-         //  );
-
-
-          // return connectionFromPromisedArray(cursor, args)
         }
       }
 
@@ -260,7 +157,7 @@ const UserSchema = (db) => {
     //  after mutation
 
     outputFields: {
-    
+
       // newUserEdge: {
       userEdge: {
         type: userConnection.edgeType,
