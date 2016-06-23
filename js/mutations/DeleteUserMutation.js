@@ -14,20 +14,16 @@ class DeleteUserMutation extends Relay.Mutation {
       id: this.props.userId
     }
   }
-
+      
   // Instead of the server specifying what is returned, the client needs to ask for what it wants
   // Instead of declaring exactly what data you want via a fragment, Relay tries to figure out the minimal amount of data you need in order to update your local graph.
   getFatQuery() {
 
     return Relay.QL`
-       fragment on DeleteUserPayload @relay(pattern: true) {
-          store{
-          userConnection {
-           pageInfoPaginated,
-           edgesPaginated{ node }
-          }
-          }
-       }
+       fragment on DeleteUserPayload  {
+       userEdge,
+          store{    userConnection { edgesPaginated { node { username,address,password,activated } }      }     } 
+           }
        
        `
   }
@@ -53,18 +49,27 @@ class DeleteUserMutation extends Relay.Mutation {
   //
   //   }];
   // }
+     
+  //  todo doesnt work
+  getOptimisticResponse() {
+    // console.log("DELETE  getOptimisticResponse this.props.store  ,%O",this.props.store)
+    const newEdges = this.props.store.userConnection.edgesPaginated.filter((userEdge) => {
+      // console.log("userEdge.node.id !== this.props.userId %s , username - %s" ,(userEdge.node.id !== this.props.userId),userEdge.node.username)
+      //      console.log("userEdge.node %O ",userEdge.node)
+      return userEdge.node.__dataID__ !== this.props.userId
+    });
 
-  getOptimisticUpdate() {
+    newEdges.forEach(edge =>{
+      edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
+
+    })
+    console.log("edges length %s newEdges Delete: %O",this.props.store.userConnection.edgesPaginated.length,newEdges)
     return {
       store: {
         id: this.props.store.id,
 
         userConnection: {
-          edges: this.props.store.userConnection.edgesPaginated.filter((userEdge) => {
-            console.log("userEdge.node.id === this.props.userId:" + (userEdge.node.id === this.props.userId))
-
-            return userEdge.node.id !== this.props.userId
-          })
+          edgesPaginated: newEdges
         }
 
       }

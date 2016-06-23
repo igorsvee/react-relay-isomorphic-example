@@ -1,4 +1,5 @@
 import Relay from 'react-relay';
+import User from '../components/User.react'
 
 class CreateUserMutation extends Relay.Mutation {
   getMutation() {
@@ -8,37 +9,39 @@ class CreateUserMutation extends Relay.Mutation {
        `
   }
 
+
   getVariables() {
     //  prepare variables to be used for the mutation, allows to do some logic on the props before sending them to the server
+
     return {
       username: this.props.username,
       address: this.props.address,
-      password: this.props.password,
+      password: this.props.password
     }
   }
-  //
-  // console
 
+  // console
+  // userEdge,
+  // store { userConnection { pageInfoPaginated, edgesPaginated { node { username,address,password,activated } } } }
   getFatQuery() {
     return Relay.QL`
-       fragment on CreateUserPayload  {
-            userEdge,
-        store {  userConnection    }
+       fragment on CreateUserPayload {
+        userEdge  , 
+           store { userConnection}
+          
        }
        `
   }
 
-  // console
   getConfigs() {
     return [{
       type: 'FIELDS_CHANGE',
       fieldIDs: {
-        store: this.props.store.id
+        store: this.props.store.id,
       }
     }];
   }
 
-  console
   // how to handle response from the server
   // getConfigs() {
   //   return [{
@@ -55,26 +58,45 @@ class CreateUserMutation extends Relay.Mutation {
   //     },
   //   }];
   // }
-             console
-  getOptimisticResponse(){
-    return {
-      store:{
-        id : this.props.store.id,
-        userConnectionPaginated:{
-          edges : {
-            node:{
-              id: 'GENERATING....',
-              username: this.props.username,
-              address: this.props.address ,
-              password: this.props.password
-            }
-          }
 
+  // this.props.store.userConnection.edgesPaginated
+
+  getOptimisticResponse() {  //todo if currentNumRecords + 1 < currentlimit
+    //  todo doesnt work
+    return {
+      userEdge: {
+        node: {
+          // id: '123',
+          username: this.props.username,
+          address: this.props.address,
+          password: this.props.password,
+          activated: false
         }
       }
-
     }
+
   }
+
+  // getOptimisticResponse() {
+  //   return {
+  //     store: {
+  //       id: this.props.store.id,
+  //       userConnection: {
+  //         edgesPaginated: {
+  //           node: {
+  //             // id: 'fuck',
+  //             username: this.props.username,
+  //             address: this.props.address,
+  //             password: this.props.password,
+  //             activated: false
+  //           }
+  //         }
+  //
+  //       }
+  //     }
+  //
+  //   }
+  // }
 
 
 }

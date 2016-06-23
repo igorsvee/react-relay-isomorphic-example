@@ -36,10 +36,14 @@ module.exports = {
     inline: true,
     progress: true
     , port: 5000
-  }
+  }    
+  
+  
 
   , node: {
-
+    // tls: "empty",
+    // console: 'empty',
+    // net:'empty' ,
     fs: 'empty',
 
   }

@@ -1,15 +1,10 @@
-import  {
-    connectionFromArraySlice
-} from 'graphql-relay'
 import {
-    GraphQLSchema,
     GraphQLObjectType,
     GraphQLInt,
     GraphQLString,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLID
-    , GraphQLBoolean
+    GraphQLBoolean
 } from 'graphql'
 
 
@@ -19,7 +14,6 @@ export const DEFAULT_START_PAGE = 1;
 
 export const paginatedArgs = {
   page: {
-    // type: new GraphQLNonNull(GraphQLInt)
     type: GraphQLInt
   },
   records: {
@@ -32,12 +26,6 @@ export const paginatedArgs = {
 }
 
 function calcPaginationParams({page = DEFAULT_START_PAGE, records = LIMIT_PER_PAGE}) {
-  // if (page == null) {
-  //   throw new Error("Page must exist")
-  // }
-  // if (records == null) {
-  //   throw new Error("Page must exist")
-  // }
   if (page < 1) {
     throw new Error("Page starts with 1")
   }
@@ -107,21 +95,20 @@ export function paginatedDefinitions(config) {
   })
 
 
-
   var connectionType = new GraphQLObjectType({
     name: name + 'Connection',
     description: 'A connection to a list of items.',
     fields: () => ({
-      pageInfoPaginated: {
+      pageInfoPaginated: {  //  changed the name to avoid graphql internal validation that requires certain field arguments
         type: new GraphQLNonNull(pageInfoType),
         description: 'Information to aid in pagination.'
       },
-      edgesPaginated: {
+      edgesPaginated: {      //  changed the name to avoid graphql internal validation that requires certain field arguments
         type: new GraphQLList(edgeType),
         description: 'A list of edges.'
       }
 
-      ,...(resolveMaybeThunk(connectionFields))
+      , ...(resolveMaybeThunk(connectionFields))
     })
   });
 
@@ -130,32 +117,28 @@ export function paginatedDefinitions(config) {
 
 }
 
-
-
 export default async function paginatedMongodbConnection(collection, args) {
   const findParams = {};
-
   const {id} = args;
-
   let {offset, limit, currentPage} = calcPaginationParams(args);
-
 
   //  id takes precedence over pagination
   if (id) {
     findParams._id = toMongoId(id);
+    //  multiple entities with the same id is not supported
     offset = 0;
     limit = 1;
   }
 
-
   const entities = await collection.find(findParams).skip(offset).limit(limit).toArray();
-  const totalNumRecords = id ? 0 : await collection.count();
+  const totalNumRecords = id ? -1 : await collection.count();
 
   const edges = entities.map((entity) => ({
     node: entity,
     cursor: '' // not null, required, graphql auto queries this field along with the connection
   }));
 
+  //  multiple entities with the same id is not supported
   const pageInfo = id ?
   {
     hasPreviousPage: false,
@@ -169,10 +152,12 @@ export default async function paginatedMongodbConnection(collection, args) {
 
 
   return {
-    edgesPaginated:edges,
-    pageInfoPaginated: {...pageInfo,
-      // startCursor: null, endCursor: null
-    }
+    edgesPaginated: edges,
+    pageInfoPaginated :pageInfo
+    // pageInfoPaginated: {
+    //   ...pageInfo,
+    //   // startCursor: null, endCursor: null
+    // }
   }
 
 }

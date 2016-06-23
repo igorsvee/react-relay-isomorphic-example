@@ -16,37 +16,45 @@ class Users extends React.Component {
   }
 
   getUsers() {
+    // if (this.props.store.userConnection.edgesPaginated.length == 0) {
+    //   return 'Empty result set'
+    // }
+
     return this.props.store.userConnection.edgesPaginated.map((edge) => <User store={this.props.store}
                                                                               user={edge.node}/>)
+  }
+  
+  componentWillReceiveProps(nextProps){
+    console.log("componentWillReceiveProps this.props.store.userConnection.edgesPaginated %O next %O",this.props.store.userConnection.edgesPaginated,nextProps.store.userConnection.edgesPaginated)
   }
 
   handleSubmit(e) {
     e.preventDefault();
 
-    // const user = {
-    //   username: this.refs.username.value,
-    //   password: this.refs.password.value,
-    //   address: this.refs.address.value,
-    //   //parent
-    //   store: this.props.store
-    // };
-       console.log("this.props.store  submit:%O ",this.props.store)
+    console.log("this.props.store  submit:%O ", this.props.store)
     // console.log("creating... %O", user);
     Relay.Store.commitUpdate(new CreateUserMutation({
-      username: this.refs.username.value,
-      password: this.refs.password.value,
-      address: this.refs.address.value,
-      store:this.props.store
-    }));
-    // new UpdateUserMutation(
-    //     {
-    //       username, id, address
-    //       , storeId: this.props.store.id
-    //       , userBeforeUpdate
-    //     }
-    // )
+          username: this.refs.username.value,
+          password: this.refs.password.value,
+          address: this.refs.address.value,
+          store: this.props.store,
+          // records: this.props.relay.variables.limit,
+          // зфпу: this.props.relay.variables.зфпу,
+        })
+        , {
+          onSuccess: () => {
+            console.log("success ! ")
+          }
+          , onFailure: () => {
+            console.log("failure ! ")
+          }
+
+        }
+    );
+
     this.clearInputFields();
   }
+
 
   clearInputFields() {
     this.refs.username.value = "";
@@ -56,23 +64,10 @@ class Users extends React.Component {
 
   handleSelectLimit(e) {
     const newLimit = Number(e.target.value);
-    console.log("new newLimit: " + newLimit)
-    this.props.relay.setVariables({limit: newLimit}, (obj) => {
-      console.log("current: %O", obj)
 
-    })
-    // console.log(this.props.relay.getPendingTransactions(this.props.store));
-    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection));
-    // console.log(this.props.relay.getPendingTransactions(this.props.store.userConnection.edgesPaginated));
-
-
+    this.props.relay.setVariables({limit: newLimit})
   }
 
-  componentWillReceiveProps(nextProps) {
-    // console.log("this.props.store.userConnection %O", this.props.store.userConnection)
-    // console.log("this.props %O, nextProps %O", this.props, nextProps)
-    // console.log("this.props.store.userConnection.edgesPaginated.length %s nextProps.store.userConnection.edgesPaginated.length %s", this.props.store.userConnection.edgesPaginated.length, nextProps.store.userConnection.edgesPaginated.length)
-  }
 
   handleNextPage() {
     this.props.relay.setVariables({page: this.props.relay.variables.page + 1})
@@ -85,9 +80,9 @@ class Users extends React.Component {
   getBottomControls() {
     const usersNotEmpty = this.props.store.userConnection.edgesPaginated.length == 0;
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
-    console.log("this.props.store.userConnection.pageInfoPaginated %O ",this.props.store.userConnection.pageInfoPaginated)
     //
-    return (<tfoot>
+    return (<tfoot> {usersNotEmpty &&
+
     <tr>
       {hasPreviousPage && <td>
         <button onClick={this.handlePrevPage}> &larr;</button>
@@ -96,6 +91,9 @@ class Users extends React.Component {
         <button onClick={this.handleNextPage}> &rarr;</button>
       </td>}
     </tr>
+
+    }
+
 
     </tfoot>)
   }
@@ -108,7 +106,8 @@ class Users extends React.Component {
           <h2>Users
             page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
 
-          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 && <select defaultValue={this.props.relay.variables.limit}  onChange={this.handleSelectLimit}>
+          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 &&
+        <select defaultValue={this.props.relay.variables.limit} onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
 
@@ -155,7 +154,7 @@ class Users extends React.Component {
     )
   }
 }
-console
+
 Users = Relay.createContainer(Users, {
 
   initialVariables: {
