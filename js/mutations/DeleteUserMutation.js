@@ -14,15 +14,17 @@ class DeleteUserMutation extends Relay.Mutation {
       id: this.props.userId
     }
   }
-      
+
+
   // Instead of the server specifying what is returned, the client needs to ask for what it wants
   // Instead of declaring exactly what data you want via a fragment, Relay tries to figure out the minimal amount of data you need in order to update your local graph.
+// (limit: ${this.props.relayVariables.limit},page: ${this.props.relayVariables.page})
   getFatQuery() {
 
+    // userEdge,
     return Relay.QL`
        fragment on DeleteUserPayload  {
-       userEdge,
-          store{    userConnection { edgesPaginated { node { username,address,password,activated } }      }     } 
+          store{    userConnection { edgesPaginated { node { id, username,address,password,activated } }      }     } 
            }
        
        `
@@ -32,7 +34,7 @@ class DeleteUserMutation extends Relay.Mutation {
     return [{
       type: 'FIELDS_CHANGE',
       fieldIDs: {
-        store: this.props.store.id
+        store: this.props.store.id,
       }
     }];
   }
@@ -49,27 +51,43 @@ class DeleteUserMutation extends Relay.Mutation {
   //
   //   }];
   // }
-     
-  //  todo doesnt work
+
   getOptimisticResponse() {
-    // console.log("DELETE  getOptimisticResponse this.props.store  ,%O",this.props.store)
-    const newEdges = this.props.store.userConnection.edgesPaginated.filter((userEdge) => {
-      // console.log("userEdge.node.id !== this.props.userId %s , username - %s" ,(userEdge.node.id !== this.props.userId),userEdge.node.username)
-      //      console.log("userEdge.node %O ",userEdge.node)
-      return userEdge.node.__dataID__ !== this.props.userId
-    });
+    /*
+     const newEdges = this.props.store.userConnection.edgesPaginated.filter((userEdge) => {
+     return userEdge.node.__dataID__ !== this.props.userId
+     });
 
-    newEdges.forEach(edge =>{
-      edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
+     newEdges.forEach(edge => {
+     // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
 
-    })
-    console.log("edges length %s newEdges Delete: %O",this.props.store.userConnection.edgesPaginated.length,newEdges)
+     })
+     this.props.store.userConnection.edgesPaginated.forEach((edge) => {
+     // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
+     })
+
+     const indexOfEdge = this.props.store.userConnection.edgesPaginated.findIndex(userEdge => {
+     return userEdge.node.__dataID__ == this.props.userId
+     })
+
+     console.log("before this.props.store.userConnection.edgesPaginated %O", this.props.store.userConnection.edgesPaginated)
+     // this.props.store.userConnection.edgesPaginated.splice(indexOfEdge,1);
+     console.log("after this.props.store.userConnection.edgesPaginated %O", this.props.store.userConnection.edgesPaginated)
+
+     */
     return {
+      // userEdge : undefined,
       store: {
         id: this.props.store.id,
 
         userConnection: {
-          edgesPaginated: newEdges
+          edgesPaginated: {
+            node: {
+              //  id == username ? ignore, else - render
+              id: this.props.userId
+              , username: this.props.userId
+            }
+          }
         }
 
       }

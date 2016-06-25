@@ -16,7 +16,7 @@ export const paginatedArgs = {
   page: {
     type: GraphQLInt
   },
-  records: {
+  limit: {
     type: GraphQLInt
 
   }
@@ -25,17 +25,17 @@ export const paginatedArgs = {
   }
 }
 
-function calcPaginationParams({page = DEFAULT_START_PAGE, records = LIMIT_PER_PAGE}) {
+function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE}) {
   if (page < 1) {
     throw new Error("Page starts with 1")
   }
-  if (records < 1) {
+  if (limit < 1) {
     throw new Error("Records starts with 1")
   }
 
   return {
-    offset: (page - 1) * records,
-    limit: records,
+    offset: (page - 1) * limit,
+    limit,
     currentPage: page
   }
 }
@@ -135,7 +135,7 @@ export default async function paginatedMongodbConnection(collection, args) {
 
   const edges = entities.map((entity) => ({
     node: entity,
-    cursor: '' // not null, required, graphql auto queries this field along with the connection
+    cursor: '' // required -> exists, not null, graphql auto queries this field along with the connection
   }));
 
   //  multiple entities with the same id is not supported

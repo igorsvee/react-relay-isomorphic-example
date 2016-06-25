@@ -20,14 +20,13 @@ class CreateUserMutation extends Relay.Mutation {
     }
   }
 
-  // console
   // userEdge,
   // store { userConnection { pageInfoPaginated, edgesPaginated { node { username,address,password,activated } } } }
   getFatQuery() {
     return Relay.QL`
        fragment on CreateUserPayload {
-        userEdge  , 
-           store { userConnection}
+            userEdge,
+          store{    userConnection { edgesPaginated { node { id, username,address,password,activated } }      }     } 
           
        }
        `
@@ -61,18 +60,37 @@ class CreateUserMutation extends Relay.Mutation {
 
   // this.props.store.userConnection.edgesPaginated
 
-  getOptimisticResponse() {  //todo if currentNumRecords + 1 < currentlimit
-    //  todo doesnt work
+        
+  getOptimisticResponse() {
+    const newNode = {
+      id: null,
+      username: this.props.username,
+      address: this.props.address,
+      password: this.props.password,
+      activated: false
+    };
+
+    const currentEdgesLength = this.props.store.userConnection.edgesPaginated.length;
+
     return {
-      userEdge: {
-        node: {
-          // id: '123',
-          username: this.props.username,
-          address: this.props.address,
-          password: this.props.password,
-          activated: false
+      store: {
+        id: this.props.store.id,
+
+        userConnection: {
+          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnection.edgesPaginated.push({node:newNode,notCreated:true})
+
         }
-      }
+
+      },
+      // userEdge: {
+      //   node: {
+      //     id: null,
+      //     username: this.props.username,
+      //     address: this.props.address,
+      //     password: this.props.password,
+      //     activated: false
+      //   } ,notCreated:true
+      // }
     }
 
   }

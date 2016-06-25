@@ -5,6 +5,7 @@ import {Link} from 'react-router';
 import CreateUserMutation from '../mutations/CreateUserMutation'
 
 import User from './User.react'
+import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
 
@@ -13,44 +14,69 @@ class Users extends React.Component {
 
   constructor(props, context) {
     super(props, context);
+
+    this.state = {
+      createTransaction: null,
+      errorMessage: null
+    }
   }
 
   getUsers() {
-    // if (this.props.store.userConnection.edgesPaginated.length == 0) {
-    //   return 'Empty result set'
-    // }
+    if (this.props.store.userConnection.edgesPaginated.length == 0) {
+      return 'Empty result set'
+    }
 
-    return this.props.store.userConnection.edgesPaginated.map((edge) => <User store={this.props.store}
-                                                                              user={edge.node}/>)
+    return this.props.store.userConnection.edgesPaginated.map((edge, ind) => {
+      if (edge.node.__dataID__ == null) {
+        return <NewUser key={ind} user={edge.node}/>
+      } else {
+        return <User store={this.props.store}
+                     user={edge.node}/>
+      }
+
+    })
   }
-  
-  componentWillReceiveProps(nextProps){
-    console.log("componentWillReceiveProps this.props.store.userConnection.edgesPaginated %O next %O",this.props.store.userConnection.edgesPaginated,nextProps.store.userConnection.edgesPaginated)
+
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps this.props.store.userConnection.edgesPaginated %O next %O", this.props.store.userConnection.edgesPaginated, nextProps.store.userConnection.edgesPaginated)
+  }
+
+  //optimistic update
+  shouldComponentUpdate(nextProps) {
+    const currentEdges = this.props.store.userConnection.edgesPaginated;
+    const lastEdge = currentEdges[currentEdges.length - 1];
+    if (lastEdge.notCreated && currentEdges.length > nextProps.store.userConnection.edgesPaginated.length) {
+      console.log("NOT UPDATING")
+      return false;
+    }
+
+    return true;
+
   }
 
   handleSubmit(e) {
     e.preventDefault();
 
-    console.log("this.props.store  submit:%O ", this.props.store)
-    // console.log("creating... %O", user);
-    Relay.Store.commitUpdate(new CreateUserMutation({
-          username: this.refs.username.value,
-          password: this.refs.password.value,
-          address: this.refs.address.value,
-          store: this.props.store,
-          // records: this.props.relay.variables.limit,
-          // зфпу: this.props.relay.variables.зфпу,
-        })
-        , {
-          onSuccess: () => {
-            console.log("success ! ")
-          }
-          , onFailure: () => {
-            console.log("failure ! ")
-          }
+    const createUserMutation = new CreateUserMutation({
+      username: this.refs.username.value,
+      password: this.refs.password.value,
+      address: this.refs.address.value,
+      store: this.props.store,
+      limit: this.props.relay.variables.limit,
+    });
 
-        }
-    );
+    const transaction = Relay.Store.applyUpdate(createUserMutation, {
+      onFailure: (transaction) => {
+        console.log("onFailure transaction %O", transaction)
+        this.setState({errorMessage: transaction.getError()})
+      }, onSuccess: ()=>console.log("Created!")
+    });
+
+    this.setState({createTransaction: transaction}, ()=> {
+      console.log("transaction state %O", this.state.createTransaction)
+    });
+
+    transaction.commit();
 
     this.clearInputFields();
   }
@@ -64,7 +90,6 @@ class Users extends React.Component {
 
   handleSelectLimit(e) {
     const newLimit = Number(e.target.value);
-
     this.props.relay.setVariables({limit: newLimit})
   }
 
@@ -78,11 +103,10 @@ class Users extends React.Component {
   }
 
   getBottomControls() {
-    const usersNotEmpty = this.props.store.userConnection.edgesPaginated.length == 0;
+    const usersNotEmpty = this.props.store.userConnection.edgesPaginated.length != 0;
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
-    //
-    return (<tfoot> {usersNotEmpty &&
 
+    return (<tfoot> { usersNotEmpty &&
     <tr>
       {hasPreviousPage && <td>
         <button onClick={this.handlePrevPage}> &larr;</button>
@@ -94,13 +118,13 @@ class Users extends React.Component {
 
     }
 
-
     </tfoot>)
   }
 
   render() {
     const {relay} = this.props;
     // console.log("this.props in render %O", this.props)
+    const {transaction} = this.state;
     return (
         <div>
           <h2>Users
@@ -120,6 +144,16 @@ class Users extends React.Component {
             <input ref="password" type="text" placeholder="pass"/>
             <input ref="address" type="text" placeholder="address"/>
             <button type="submit">Create</button>
+
+            {  transaction && transaction.getStatus() === 'COMMIT_FAILED' &&
+            <h3>Creation failed {this.state.errorMessage}
+              <button onClick={() =>  this.state.createTransaction.recommit()}>Retry</button>
+            </h3>
+
+
+            }
+
+
           </form>
 
           <table>
@@ -169,13 +203,13 @@ Users = Relay.createContainer(Users, {
     //  todo this.props. store (fragment ignored and then ) .  linkConnection
     //  read the global id from the store bc mutation is using it
     store: () => {
-      const query = Relay.QL `
+      return Relay.QL `
       fragment on Store {
          id
-         userConnection(page: $page, records:$limit){
+         userConnection(page: $page, limit:$limit){
             pageInfoPaginated{
-           hasNextPage,hasPreviousPage
-         },
+              hasNextPage,hasPreviousPage
+            },
             edgesPaginated{
                  node{
                    ${User.getFragment('user')}
@@ -186,10 +220,7 @@ Users = Relay.createContainer(Users, {
          }
          
       }
-      `;
-
-      console.log("query ,%O", query)
-      return query
+      `
 
 
     }

@@ -19,7 +19,7 @@ Relay.injectNetworkLayer(
 const history = useRouterHistory(createHashHistory)({queryKey: false});
 
 const container = document.createElement('div');
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", function () {
 
   document.body.appendChild(container);
 

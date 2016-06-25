@@ -37,9 +37,7 @@ const UserSchema = (db) => {
 
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
-      // globalId  => {
-      // async function (globalId) {
-      async(globalId) => {
+      async (globalId) => {
         const {type, id} = fromGlobalId(globalId);
 
         switch (type) {
@@ -207,8 +205,8 @@ const UserSchema = (db) => {
         // receives obj from below          insertedCount
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        // resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
-        resolve: (obj) => ({node: obj.value})
+        resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
+        // resolve: (obj) => ({node: obj.value})
 
       },
 
