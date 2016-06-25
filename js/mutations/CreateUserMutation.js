@@ -77,7 +77,7 @@ class CreateUserMutation extends Relay.Mutation {
         id: this.props.store.id,
 
         userConnection: {
-          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnection.edgesPaginated.push({node:newNode,notCreated:true})
+          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnection.edgesPaginated.push({node:newNode,optimistic:true})
 
         }
 

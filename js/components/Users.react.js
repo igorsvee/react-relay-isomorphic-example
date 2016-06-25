@@ -22,12 +22,14 @@ class Users extends React.Component {
   }
 
   getUsers() {
-    if (this.props.store.userConnection.edgesPaginated.length == 0) {
-      return 'Empty result set'
+    if (!this.usersNotEmpty()) {
+      return <tr>
+        <td>Empty result set</td>
+      </tr>
     }
 
     return this.props.store.userConnection.edgesPaginated.map((edge, ind) => {
-      if (edge.node.__dataID__ == null) {
+      if (edge.node.__dataID__ == null) {// newly create node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
         return <User store={this.props.store}
@@ -43,12 +45,15 @@ class Users extends React.Component {
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
-    const currentEdges = this.props.store.userConnection.edgesPaginated;
-    const lastEdge = currentEdges[currentEdges.length - 1];
-    if (lastEdge.notCreated && currentEdges.length > nextProps.store.userConnection.edgesPaginated.length) {
-      console.log("NOT UPDATING")
-      return false;
+    if (this.usersNotEmpty()) {
+      const currentEdges = this.props.store.userConnection.edgesPaginated;
+      const lastEdge = currentEdges[currentEdges.length - 1];
+      if (lastEdge.optimistic && currentEdges.length > nextProps.store.userConnection.edgesPaginated.length) {
+        console.log("NOT UPDATING")
+        return false;
+      }
     }
+
 
     return true;
 
@@ -102,11 +107,18 @@ class Users extends React.Component {
     this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
   }
 
+  usersNotEmpty() {
+    return this.props.store.userConnection.edgesPaginated.length != 0;
+  }
+
   getBottomControls() {
-    const usersNotEmpty = this.props.store.userConnection.edgesPaginated.length != 0;
+    if (!this.usersNotEmpty()) {
+      return null;
+    }
+
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
 
-    return (<tfoot> { usersNotEmpty &&
+    return (<tfoot>
     <tr>
       {hasPreviousPage && <td>
         <button onClick={this.handlePrevPage}> &larr;</button>
@@ -115,22 +127,21 @@ class Users extends React.Component {
         <button onClick={this.handleNextPage}> &rarr;</button>
       </td>}
     </tr>
-
-    }
-
     </tfoot>)
   }
 
   render() {
-    const {relay} = this.props;
+
+
+    const {relay, store} = this.props;
     // console.log("this.props in render %O", this.props)
     const {transaction} = this.state;
     return (
         <div>
           <h2>Users
-            page#{this.props.relay.variables.page} {relay.hasOptimisticUpdate(this.props.store) && 'Processing operation...'   } </h2>
+            page#{relay.variables.page} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
 
-          Limit: {this.props.relay.variables.limit} {this.props.relay.variables.page === 1 &&
+          Limit: {relay.variables.limit} {relay.variables.page === 1 &&
         <select defaultValue={this.props.relay.variables.limit} onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
@@ -157,10 +168,11 @@ class Users extends React.Component {
           </form>
 
           <table>
+
             <thead>
-            <tr >
+            <tr key="head">
               <th>
-                id
+                isd
               </th>
 
               <th>
@@ -175,14 +187,16 @@ class Users extends React.Component {
               </th>
             </tr>
             </thead>
+
+
             <tbody>
             {this.getUsers()}
-
             </tbody>
 
             {this.getBottomControls()}
 
           </table>
+
 
         </div>
     )

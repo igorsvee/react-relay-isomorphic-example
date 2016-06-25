@@ -1,7 +1,6 @@
 import React from "react";
 import linkState from 'react-link-state';
 import Relay from 'react-relay'
-import User from './User.react'
 import UpdateUserMutation from '../mutations/UpdateUserMutation';
 import  {
 
@@ -22,26 +21,20 @@ class UserConcrete extends React.Component {
       address: ''
     };
 
-    // console.log("constructxqor {this.props.relay.route.params.userId} %s {this.props.relay.variables.userId} %s", props.relay.route.params.userId,props.relay.variables.userId)
-    console.warn("constructor PROPS %O ", this.props)
-
-
   }
 
-  //todo refractor
   //todo not using constructor intentionally
   componentWillMount() {
     //  injected from react-router
-    if (this.hasRequiredPropsFromRouter()) {
-      this.updateUserStateFromProps(this.props)
+    if (this.hasRequiredPropsFromRouter() && this.propsContainUser()) {
+      this.updateUserStateFromProps()
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!this.hasRequiredPropsFromRouter()) {
+    if (!this.hasRequiredPropsFromRouter() && this.propsContainUser(nextProps)) {
       //  1st render with injected router props
       this.updateUserStateFromProps(nextProps)
-      console.warn("componentWillReceiveProps PROPS %O ", nextProps)
       this.componentWillReceiveProps = function (nextProps) {
         if (this.hasRequiredPropsFromRouter() && (this.props.store.userConnection != nextProps.store.userConnection)) {
           console.log("user has changed ")
@@ -54,9 +47,9 @@ class UserConcrete extends React.Component {
 
   }
 
-  usersEqualStateAndProps() {
-    const user = this.getUserNodeFromProps(this.props);
-    return this.state.username == user.username && this.state.address == user.address
+  userWasEdited() {
+    const user = this.getUserFromProps();
+    return this.state.username != user.username || this.state.address != user.address
   }
 
   turnOnEditMode() {
@@ -69,12 +62,18 @@ class UserConcrete extends React.Component {
     return this.props.userId != null;
   }
 
-  renderUserContent(user) {
+  propsContainUser(props = this.props) {
+    return props.store.userConnection.edgesPaginated.length != 0
+  }
+
+  getUserContent(user) {
+    const idCell = (    <td>
+      {fromGlobalId(user.id).id}
+    </td>);
+
     if (this.state.editMode) {
       return (<tr>
-        <td>
-          -
-        </td>
+        {idCell}
         <td>
           <input valueLink={linkState(this, 'username')} ref="username" type="text"/>
         </td>
@@ -84,9 +83,7 @@ class UserConcrete extends React.Component {
       </tr>)
     } else {
       return (<tr>
-        <td>
-          {fromGlobalId(user.id).id}
-        </td>
+        {idCell}
         <td>
           {user.username}
         </td>
@@ -99,12 +96,12 @@ class UserConcrete extends React.Component {
 
   }
 
-  renderUserControls() {
+  getUserControls() {
     if (this.state.editMode) {
       return (
           <tr>
             <td>
-              -
+              &nbsp;
             </td>
             <td>
               <button onClick={this.handleCancelChanges}>Cancel Changes</button>
@@ -129,10 +126,10 @@ class UserConcrete extends React.Component {
   }
 
   propertyChanged(propName) {
-    return this.state[propName] !== this.getUserNodeFromProps(this.props)[propName]
+    return this.state[propName] !== this.getUserFromProps(this.props)[propName]
   }
 
-  getUserNodeFromProps(props) {
+  getUserFromProps(props = this.props) {
     return props.store.userConnection.edgesPaginated[0].node;
   }
 
@@ -141,13 +138,13 @@ class UserConcrete extends React.Component {
     const username = this.propertyChanged('username') ? this.state.username : undefined;
     const address = this.propertyChanged('address') ? this.state.address : undefined;
 
-    const userStoreNode = this.getUserNodeFromProps(this.props);
+    const userInStore = this.getUserFromProps();
 
     //  won't change, using it
-    const id = userStoreNode.id;
+    const id = userInStore.id;
 
     //  for optimistic comparison
-    const userBeforeUpdate = {id, username: userStoreNode.username, address: userStoreNode.address}
+    const userBeforeUpdate = {id, username: userInStore.username, address: userInStore.address}
 
     console.log("Saving %O...", {username, address, id});
 
@@ -174,8 +171,8 @@ class UserConcrete extends React.Component {
     this.setState({editMode: false});
   }
 
-  updateUserStateFromProps(props) {
-    const user = this.getUserNodeFromProps(props);
+  updateUserStateFromProps(props = this.props) {
+    const user = this.getUserFromProps(props);
     const {username, address} = user;
 
     this.setState({
@@ -185,8 +182,7 @@ class UserConcrete extends React.Component {
   }
 
   handleCancelChanges() {
-    this.updateUserStateFromProps(this.props)
-
+    this.updateUserStateFromProps();
     this.turnOffEditMode();
   }
 
@@ -196,14 +192,17 @@ class UserConcrete extends React.Component {
       return <h1>Loading...</h1>
     }
 
-    const {relay} = this.props;
+    if (!this.propsContainUser()) {
+      return <h3>No user with id #{this.props.userId} found</h3>
+    }
 
-    const userDb = this.getUserNodeFromProps(this.props);
+    const {relay, store} = this.props;
+
+    const user = this.getUserFromProps();
 
     return (
         <div>
-          <h1>Concrete page for {userDb.username}:</h1>
-          {relay.hasOptimisticUpdate(this.props.store) && <h2>Updating...</h2>}
+          <h1>Concrete page for {user.username}:</h1>
           <table>
             <tr>
               <td>
@@ -217,12 +216,14 @@ class UserConcrete extends React.Component {
               </td>
             </tr>
 
+            {this.getUserContent(user)}
 
-            {this.renderUserContent(this.getUserNodeFromProps(this.props))}
+            {this.getUserControls()}
 
-            {this.renderUserControls()}
           </table>
-          {!this.usersEqualStateAndProps() && <h3>Has unsaved changes</h3>}
+
+          {relay.hasOptimisticUpdate(store) && <h2>Updating...</h2>}
+          {this.userWasEdited() && <h3>Has unsaved changes</h3>}
 
         </div>
     )
