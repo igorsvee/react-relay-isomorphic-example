@@ -1,6 +1,6 @@
 # react-relay-app
-A simple crud app I've built in order to get familiar with the Relay stack.
-Uses react-relay-router for routing and mongodb as a db.
+A simple crud app I've built in order to get familiar with the Relay framework.
+Uses react-relay-router for routing and mongodb as a db. Has working pagination with previous/next and optimistic updates for all operations.
 Usage:
 -------
 
