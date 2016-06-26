@@ -5,9 +5,11 @@ import {Link} from 'react-router';
 
 class UserApp extends React.Component {
 
+  shouldComponentUpdate(nextProps){
+    return this.props.children != nextProps.children
+  }
 
   render() {
-
     return (
         <div>
           <h1>User app root</h1>
@@ -20,16 +22,5 @@ class UserApp extends React.Component {
   }
 }
 
-UserApp = Relay.createContainer(UserApp, {
-  fragments: {
-// # This fragment only applies to objects of type 'Store'.
-    store: (Component) => Relay.QL `
-  
-      fragment on Store {
-         id
-      }
-      `
-  }
-})
 
 export default UserApp;

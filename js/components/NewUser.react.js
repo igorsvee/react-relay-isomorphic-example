@@ -1,7 +1,7 @@
 import React from "react";
 import Relay from 'react-relay'
 
-
+//  doesnt have an id
 class NewUser extends React.Component {
 
   shouldComponentUpdate() {
@@ -10,8 +10,7 @@ class NewUser extends React.Component {
 
   render() {
     const {user} = this.props;
-    console.warn("NEWUSER %O," + user)
-    //  doesnt have id
+
     return (
         <tr >
           <td>generating...</td>

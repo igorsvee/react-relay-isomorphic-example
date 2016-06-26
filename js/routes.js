@@ -8,14 +8,9 @@ import Users from './components/Users.react'
 import UserConcrete from './components/UserConcrete.react'
 import UserApp from './components/UserApp.react';
 
-// render={({ props ,routerProps}) => {
-//   console.log('Route path="users" props? %O ',props) ;
-//   console.log('Route path="users" routerProps? %O ',routerProps) ;
-//
-//   return <Users {...props} />
-// }}
+
 export default (
-    <Route path="/" component={UserApp} queries={StoreQueries}>
+    <Route path="/" component={UserApp} >
 
       <Route path="users" component={Users} queries={StoreQueries}/>
 
@@ -30,10 +25,4 @@ export default (
     </Route>
 );
 
-function prepareConcreteUserParams(params, route) {
-  return {
-    ...params,
-
-  };
-};
 

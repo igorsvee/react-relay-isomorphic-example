@@ -15,19 +15,19 @@ class User extends React.Component {
   }
 
   handleDetailsClick(id) {
-    return () =>{
+    return () => {
       this.context.router.push("/users/" + id);
     }
   }
 
-  handleDeleteClick (id) {
+  handleDeleteClick(id) {
     return () => {
       console.log("deleting user #... " + id)
 
       Relay.Store.commitUpdate(
           new DeleteUserMutation(
               {
-                userId: id ,
+                userId: id,
                 store: this.props.store,
                 relayVariables: this.props.relayVariables
               }
@@ -44,13 +44,13 @@ class User extends React.Component {
 
   setActivation(userId, activated) {
     return () => {
-      console.log("userId %s activated %s storeId",userId,activated,this.props.store.id)
+      console.log("userId %s activated %s storeId", userId, activated, this.props.store.id)
       Relay.Store.commitUpdate(
           new ToggleUserActivatedMutation(
               {
-                 userId,
+                userId,
                 activated
-                ,storeId: this.props.store.id
+                , storeId: this.props.store.id
               }
           )
           , {
@@ -72,8 +72,8 @@ class User extends React.Component {
     // const relayUserId = user.__dataID__;
     const realId = fromGlobalId(relayUserId).id;
 
-   const currentUsername = this.props.user.username;
-    if(relayUserId == currentUsername){//is set by delete mutation optimistic update
+    const currentUsername = this.props.user.username;
+    if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
       return null;
     }
     return (
@@ -83,7 +83,7 @@ class User extends React.Component {
           <td>{user.address}</td>
           <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated ?
               <button onClick={this.setActivation(relayUserId,false)}>Deactivate</button>
-              :<button onClick={this.setActivation(relayUserId,true)}>Activate</button>
+              : <button onClick={this.setActivation(relayUserId,true)}>Activate</button>
 
           }</td>
           <td>

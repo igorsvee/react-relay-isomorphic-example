@@ -22,7 +22,7 @@ class Users extends React.Component {
   }
 
   getUsers() {
-    if (!this.usersNotEmpty()) {
+    if (!this.hasUser()) {
       return <tr>
         <td>Empty result set</td>
       </tr>
@@ -45,7 +45,7 @@ class Users extends React.Component {
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
-    if (this.usersNotEmpty()) {
+    if (this.hasUser()) {
       const currentEdges = this.props.store.userConnection.edgesPaginated;
       const lastEdge = currentEdges[currentEdges.length - 1];
       if (lastEdge.optimistic && currentEdges.length > nextProps.store.userConnection.edgesPaginated.length) {
@@ -107,12 +107,12 @@ class Users extends React.Component {
     this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
   }
 
-  usersNotEmpty() {
+  hasUser() {
     return this.props.store.userConnection.edgesPaginated.length != 0;
   }
 
   getBottomControls() {
-    if (!this.usersNotEmpty()) {
+    if (!this.hasUser()) {
       return null;
     }
 
@@ -131,8 +131,6 @@ class Users extends React.Component {
   }
 
   render() {
-
-
     const {relay, store} = this.props;
     // console.log("this.props in render %O", this.props)
     const {transaction} = this.state;
@@ -204,17 +202,13 @@ class Users extends React.Component {
 }
 
 Users = Relay.createContainer(Users, {
-
   initialVariables: {
     limit: 999,
     page: 1
   },
-  //  todo a store fragment will give us this.props.-> store <- this store prop
 
   fragments: {
     // and every fragment is a function that return a graphql query
-
-    //  todo this.props. store (fragment ignored and then ) .  linkConnection
     //  read the global id from the store bc mutation is using it
     store: () => {
       return Relay.QL `

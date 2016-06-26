@@ -44,7 +44,6 @@ class UserConcrete extends React.Component {
 
     }
 
-
   }
 
   userWasEdited() {
@@ -126,34 +125,29 @@ class UserConcrete extends React.Component {
   }
 
   propertyChanged(propName) {
-    return this.state[propName] !== this.getUserFromProps(this.props)[propName]
+    return this.state[propName] !== this.getUserFromProps()[propName]
   }
 
   getUserFromProps(props = this.props) {
     return props.store.userConnection.edgesPaginated[0].node;
   }
 
-
   handleSaveChanges() {
-    const username = this.propertyChanged('username') ? this.state.username : undefined;
-    const address = this.propertyChanged('address') ? this.state.address : undefined;
-
-    const userInStore = this.getUserFromProps();
+    const userStore = this.getUserFromProps();
 
     //  won't change, using it
-    const id = userInStore.id;
+    const id = userStore.id;
 
-    //  for optimistic comparison
-    const userBeforeUpdate = {id, username: userInStore.username, address: userInStore.address}
+    const username = this.propertyChanged('username') ? this.state.username : userStore.username;
+    const address = this.propertyChanged('address') ? this.state.address : userStore.address;
 
-    console.log("Saving %O...", {username, address, id});
+    console.log("Updating %O...", {username, address, id});
 
     Relay.Store.commitUpdate(
         new UpdateUserMutation(
             {
               username, id, address
               , storeId: this.props.store.id
-              , userBeforeUpdate
             }
         )
         , {
@@ -173,11 +167,10 @@ class UserConcrete extends React.Component {
 
   updateUserStateFromProps(props = this.props) {
     const user = this.getUserFromProps(props);
-    const {username, address} = user;
 
     this.setState({
-      username,
-      address
+      username: user.username,
+      address: user.address
     })
   }
 
@@ -249,8 +242,7 @@ UserConcrete = Relay.createContainer(UserConcrete, {
             userConnection(id: $userId) {
                 edgesPaginated{
                   node {
-                     
-username,
+    username,
     id,
     password,
     address,
@@ -268,11 +260,4 @@ username,
   }
 })
 
-// ${User.getFragment('user')}
 export default UserConcrete;
-//
-// username,
-//     id,
-//     password,
-//     address,
-//     activated
