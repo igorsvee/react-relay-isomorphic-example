@@ -22,10 +22,10 @@ import  {
 } from 'graphql-relay'
 import database from './database';
 import User from '../js/models/User';
-import paginatedMongodbConnection, {paginatedDefinitions, paginatedArgs} from '../js/utils/paginatedMongodbConnection';
+import paginatedMongodbConnection, {paginatedDefinitions, paginatedArgs} from '../server/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
-import {toMongoId} from '../js/utils/general'
+import {toMongoId} from '../server/serverUtils'
 
 
 const UserSchema = (db) => {

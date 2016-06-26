@@ -8,7 +8,7 @@ import {
 } from 'graphql'
 
 
-import {toMongoId} from '../utils/general'
+import {toMongoId} from './serverUtils'
 export const LIMIT_PER_PAGE = 1;
 export const DEFAULT_START_PAGE = 1;
 

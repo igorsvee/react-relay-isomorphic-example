@@ -8,7 +8,7 @@ import User from './User.react'
 import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
-
+import {applyUpdate} from '../utils/RelayUtils'
 @autobind
 class Users extends React.Component {
 
@@ -48,8 +48,11 @@ class Users extends React.Component {
     if (this.hasUser()) {
       const currentEdges = this.props.store.userConnection.edgesPaginated;
       const lastEdge = currentEdges[currentEdges.length - 1];
-      if (lastEdge.optimistic && currentEdges.length > nextProps.store.userConnection.edgesPaginated.length) {
-        console.log("NOT UPDATING")
+
+      const nextEdges = nextProps.store.userConnection.edgesPaginated;
+
+      if (lastEdge.optimistic && currentEdges.length > nextEdges.length) {
+        console.log("NOT Rerendering Users")
         return false;
       }
     }
@@ -70,16 +73,16 @@ class Users extends React.Component {
       limit: this.props.relay.variables.limit,
     });
 
+
     const transaction = Relay.Store.applyUpdate(createUserMutation, {
       onFailure: (transaction) => {
         console.log("onFailure transaction %O", transaction)
         this.setState({errorMessage: transaction.getError()})
-      }, onSuccess: ()=>console.log("Created!")
+      }
+      , onSuccess: ()=>console.log("Created!")
     });
 
-    this.setState({createTransaction: transaction}, ()=> {
-      console.log("transaction state %O", this.state.createTransaction)
-    });
+    this.setState({createTransaction: transaction});
 
     transaction.commit();
 
@@ -118,29 +121,32 @@ class Users extends React.Component {
 
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfoPaginated;
 
-    return (<tfoot>
-    <tr>
-      {hasPreviousPage && <td>
-        <button onClick={this.handlePrevPage}> &larr;</button>
-      </td>}
-      {hasNextPage && <td>
-        <button onClick={this.handleNextPage}> &rarr;</button>
-      </td>}
-    </tr>
-    </tfoot>)
+    return (
+        <tr>
+          {hasPreviousPage && <td>
+            <button onClick={this.handlePrevPage}> &larr;</button>
+          </td>}
+          {hasNextPage && <td>
+            <button onClick={this.handleNextPage}> &rarr;</button>
+          </td>}
+        </tr>
+    )
   }
 
   render() {
     const {relay, store} = this.props;
     // console.log("this.props in render %O", this.props)
-    const {transaction} = this.state;
+    const {createTransaction} = this.state;
+
+    const currentPage = relay.variables.page;
+    const currentLimit = relay.variables.limit;
     return (
         <div>
           <h2>Users
-            page#{relay.variables.page} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
+            page#{currentPage} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
 
-          Limit: {relay.variables.limit} {relay.variables.page === 1 &&
-        <select defaultValue={this.props.relay.variables.limit} onChange={this.handleSelectLimit}>
+          Limit: {currentLimit} {currentPage === 1 &&
+        <select defaultValue={currentLimit} onChange={this.handleSelectLimit}>
           <option value="1">1</option>
           <option value="3">3</option>
 
@@ -154,13 +160,16 @@ class Users extends React.Component {
             <input ref="address" type="text" placeholder="address"/>
             <button type="submit">Create</button>
 
-            {  transaction && transaction.getStatus() === 'COMMIT_FAILED' &&
-            <h3>Creation failed {this.state.errorMessage}
-              <button onClick={() =>  this.state.createTransaction.recommit()}>Retry</button>
-            </h3>
+            { /*
+             [RelayMutationQueue] access transactions after callback has been called #1221
 
+             {  createTransaction && createTransaction.getStatus() === 'COMMIT_FAILED' &&
+             <h3>Creation failed {this.state.errorMessage}
+             <button onClick={() =>  createTransaction.recommit()}>Retry</button>
+             </h3>
+             }
 
-            }
+             */}
 
 
           </form>
@@ -191,8 +200,9 @@ class Users extends React.Component {
             {this.getUsers()}
             </tbody>
 
+            <tfoot>
             {this.getBottomControls()}
-
+            </tfoot>
           </table>
 
 

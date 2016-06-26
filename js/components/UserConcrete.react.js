@@ -8,7 +8,7 @@ import  {
 
 } from 'graphql-relay'
 import autobind from 'autobind-decorator'
-
+import {commitUpdate} from '../utils/RelayUtils'
 @autobind
 class UserConcrete extends React.Component {
 
@@ -141,22 +141,18 @@ class UserConcrete extends React.Component {
     const username = this.propertyChanged('username') ? this.state.username : userStore.username;
     const address = this.propertyChanged('address') ? this.state.address : userStore.address;
 
-    console.log("Updating %O...", {username, address, id});
+    console.log("Update user %O...", {username, address, id});
 
-    Relay.Store.commitUpdate(
-        new UpdateUserMutation(
-            {
-              username, id, address
-              , storeId: this.props.store.id
-            }
-        )
-        , {
-          onSuccess: () => {
-            console.log("UPDATED ! ")
-          }
-
+    const updateMutation =  new UpdateUserMutation(
+        {
+          username, id, address
+          , storeId: this.props.store.id
         }
     );
+
+    commitUpdate(Relay.Store, updateMutation)
+        .then((resp)=>console.log("Updated successfully!"))
+        .catch((transaction) =>console.log("Failed update"))
 
     this.turnOffEditMode();
   }

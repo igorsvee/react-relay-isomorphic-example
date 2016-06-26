@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs'
 import {MongoClient}  from 'mongodb';
-import UserSchema from './data/userschema'
+import UserSchema from '../data/userschema'
 import GraphQLHTTP from 'express-graphql'
 
 import   {graphql}   from 'graphql';

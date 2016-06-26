@@ -6,6 +6,8 @@ import  {
 
 } from 'graphql-relay'
 
+import {commitUpdate} from '../utils/RelayUtils'
+
 import DeleteUserMutation from '../mutations/DeleteUserMutation';
 import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutation';
 class User extends React.Component {
@@ -22,44 +24,36 @@ class User extends React.Component {
 
   handleDeleteClick(id) {
     return () => {
-      console.log("deleting user #... " + id)
+      console.log("deleting user #" + id)
 
-      Relay.Store.commitUpdate(
-          new DeleteUserMutation(
-              {
-                userId: id,
-                store: this.props.store,
-                relayVariables: this.props.relayVariables
-              }
-          )
-          , {
-            onSuccess: () => {
-              console.log("Deleted successfully! ")
-            }
-
+      const deleteMutation = new DeleteUserMutation(
+          {
+            userId: id,
+            store: this.props.store,
+            relayVariables: this.props.relayVariables
           }
       );
+
+      commitUpdate(Relay.Store, deleteMutation)
+          .then((resp)=>console.log("Deleted successfully!"))
+          .catch((transaction) =>console.log("Failed deletion"))
+
     }
   }
 
   setActivation(userId, activated) {
     return () => {
-      console.log("userId %s activated %s storeId", userId, activated, this.props.store.id)
-      Relay.Store.commitUpdate(
-          new ToggleUserActivatedMutation(
-              {
-                userId,
-                activated
-                , storeId: this.props.store.id
-              }
-          )
-          , {
-            onSuccess: () => {
-
-            }
-
+      const activationMutation = new ToggleUserActivatedMutation(
+          {
+            userId,
+            activated
+            , storeId: this.props.store.id
           }
       );
+
+      commitUpdate(Relay.Store, activationMutation)
+          .then((resp)=>console.log("Activated successfully!"))
+          .catch((transaction) =>console.log("Failed activation"))
 
     }
 
