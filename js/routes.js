@@ -10,19 +10,19 @@ import UserApp from './components/UserApp.react';
 
 
 export default (
-    <Route path="/" component={UserApp} >
+    <Route path="/" component={UserApp}>
 
       <Route path="users" component={Users} queries={StoreQueries}/>
 
       <Route path="users/:userId"
              render={({ props ,routerProps}) => {
-            console.log('path="users/:userId" props? %O ',props) ;
-            console.log('path="users/:userId"routerProps props? %O ',routerProps) ;
-      return <UserConcrete {...props} /> }}
+      return props ? <UserConcrete {...props} />  : <h3>Loading user...</h3>  }   }
              component={UserConcrete} queries={ConcreteUserQueries}/>
 
 
     </Route>
 );
+
+
 
 

@@ -1,12 +1,6 @@
-import  {
-    globalIdField,
-    fromGlobalId,
+export default class User {
 
-} from 'graphql-relay'
-
-class User {
-
-  constructor({_id, username, password, address,activated}) {
+  constructor({_id, username, password, address, activated}) {
     this._id = _id;
     this.username = username;
     this.password = password;
@@ -14,8 +8,4 @@ class User {
     this.activated = activated;
   }
 
-
-
 }
-
-export default User;

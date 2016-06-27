@@ -22,7 +22,7 @@ class Users extends React.Component {
   }
 
   getUsers() {
-    if (!this.hasUser()) {
+    if (!this.hasUsers()) {
       return <tr>
         <td>Empty result set</td>
       </tr>
@@ -45,7 +45,7 @@ class Users extends React.Component {
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
-    if (this.hasUser()) {
+    if (this.hasUsers()) {
       const currentEdges = this.props.store.userConnection.edgesPaginated;
       const lastEdge = currentEdges[currentEdges.length - 1];
 
@@ -110,12 +110,12 @@ class Users extends React.Component {
     this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
   }
 
-  hasUser() {
+  hasUsers() {
     return this.props.store.userConnection.edgesPaginated.length != 0;
   }
 
   getBottomControls() {
-    if (!this.hasUser()) {
+    if (!this.hasUsers()) {
       return null;
     }
 
@@ -135,7 +135,6 @@ class Users extends React.Component {
 
   render() {
     const {relay, store} = this.props;
-    // console.log("this.props in render %O", this.props)
     const {createTransaction} = this.state;
 
     const currentPage = relay.variables.page;

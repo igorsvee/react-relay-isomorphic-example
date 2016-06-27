@@ -14,7 +14,12 @@ class User extends React.Component {
 
   static contextTypes = {
     router: React.PropTypes.object.isRequired
-  }
+  };
+
+  static propTypes = {
+    store: React.PropTypes.object.isRequired,
+    user: React.PropTypes.object.isRequired,
+  };
 
   handleDetailsClick(id) {
     return () => {
@@ -41,7 +46,7 @@ class User extends React.Component {
     }
   }
 
-  setActivation(userId, activated) {
+  setUserActivation(userId, activated) {
     return () => {
       const activationMutation = new ToggleUserActivatedMutation(
           {
@@ -60,24 +65,23 @@ class User extends React.Component {
   }
 
   render() {
-    const {user} = this.props;
-
+    const {user,relay} = this.props;
     const relayUserId = user.id;
-    // const relayUserId = user.__dataID__;
-    const realId = fromGlobalId(relayUserId).id;
-
-    const currentUsername = this.props.user.username;
+    const currentUsername = user.username;
     if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
       return null;
     }
+
+    const mongoId = fromGlobalId(relayUserId).id;
+
     return (
         <tr key={relayUserId}>
-          <td>realId - {realId}, relayId - {relayUserId}</td>
-          <td>{user.username}</td>
+          <td>mongoId - {mongoId}, relayId - {relayUserId}</td>
+          <td>{currentUsername}</td>
           <td>{user.address}</td>
           <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated ?
-              <button onClick={this.setActivation(relayUserId,false)}>Deactivate</button>
-              : <button onClick={this.setActivation(relayUserId,true)}>Activate</button>
+              <button onClick={this.setUserActivation(relayUserId,false)}>Deactivate</button>
+              : <button onClick={this.setUserActivation(relayUserId,true)}>Activate</button>
 
           }</td>
           <td>
@@ -86,7 +90,7 @@ class User extends React.Component {
           <td>
             <button onClick={this.handleDeleteClick(relayUserId )}>X</button>
           </td>
-          {this.props.relay.hasOptimisticUpdate(this.props.user) && <td>Processing node ...</td> }
+          {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
         </tr>
 
 

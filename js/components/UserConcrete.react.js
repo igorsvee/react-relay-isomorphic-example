@@ -12,6 +12,10 @@ import {commitUpdate} from '../utils/RelayUtils'
 @autobind
 class UserConcrete extends React.Component {
 
+  static propTypes = {
+    userId: React.PropTypes.string.isRequired,
+  } ;
+
   constructor(props, context) {
     super(props, context);
 
@@ -26,17 +30,17 @@ class UserConcrete extends React.Component {
   //todo not using constructor intentionally
   componentWillMount() {
     //  injected from react-router
-    if (this.hasRequiredPropsFromRouter() && this.propsContainUser()) {
+    if (this.propsContainUser()) {
       this.updateUserStateFromProps()
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!this.hasRequiredPropsFromRouter() && this.propsContainUser(nextProps)) {
+    if (this.propsContainUser(nextProps)) {
       //  1st render with injected router props
       this.updateUserStateFromProps(nextProps)
       this.componentWillReceiveProps = function (nextProps) {
-        if (this.hasRequiredPropsFromRouter() && (this.props.store.userConnection != nextProps.store.userConnection)) {
+        if (this.props.store.userConnection != nextProps.store.userConnection) {
           console.log("user has changed ")
           this.updateUserStateFromProps(nextProps)
         }
@@ -55,10 +59,6 @@ class UserConcrete extends React.Component {
     this.setState({
       editMode: true
     })
-  }
-
-  hasRequiredPropsFromRouter() {
-    return this.props.userId != null;
   }
 
   propsContainUser(props = this.props) {
@@ -143,7 +143,7 @@ class UserConcrete extends React.Component {
 
     console.log("Update user %O...", {username, address, id});
 
-    const updateMutation =  new UpdateUserMutation(
+    const updateMutation = new UpdateUserMutation(
         {
           username, id, address
           , storeId: this.props.store.id
@@ -177,10 +177,6 @@ class UserConcrete extends React.Component {
 
 
   render() {
-    if (!this.hasRequiredPropsFromRouter()) {
-      return <h1>Loading...</h1>
-    }
-
     if (!this.propsContainUser()) {
       return <h3>No user with id #{this.props.userId} found</h3>
     }

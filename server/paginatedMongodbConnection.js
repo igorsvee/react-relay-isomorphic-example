@@ -119,41 +119,42 @@ export function paginatedDefinitions(config) {
 
 export default async function paginatedMongodbConnection(collection, args) {
   const findParams = {};
-  const {id} = args;
-  let {offset, limit, currentPage} = calcPaginationParams(args);
 
-  //  id takes precedence over pagination
+  let offset, limit, currentPage;
+
+  const {id} = args;
+
   if (id) {
     findParams._id = toMongoId(id);
     //  multiple entities with the same id is not supported
     offset = 0;
     limit = 1;
+    //currentPage - irrelevant
+  } else {
+    const params = calcPaginationParams(args);
+
+    offset = params.offset;
+    limit = params.limit;
+    currentPage = params.currentPage;
   }
+
 
   const entities = await collection.find(findParams).skip(offset).limit(limit).toArray();
   const totalNumRecords = id ? -1 : await collection.count();
 
-  const edges = entities.map((entity) => ({
-    node: entity,
+  const edges = entities.map((node) => ({
+    node,
     cursor: '' // required -> exists, not null, graphql auto queries this field along with the connection
   }));
 
   //  multiple entities with the same id is not supported
-  const pageInfo = id ?
-  {
-    hasPreviousPage: false,
-    hasNextPage: false
-  }
-      :
-  {
-    hasPreviousPage: totalNumRecords != 0 && currentPage > 1,
-    hasNextPage: currentPage * limit < totalNumRecords
-  };
+  const pageInfo = id ? {hasPreviousPage: false, hasNextPage: false}
+      : {hasPreviousPage: totalNumRecords != 0 && currentPage > 1, hasNextPage: currentPage * limit < totalNumRecords};
 
 
   return {
     edgesPaginated: edges,
-    pageInfoPaginated :pageInfo
+    pageInfoPaginated: pageInfo
     // pageInfoPaginated: {
     //   ...pageInfo,
     //   // startCursor: null, endCursor: null
