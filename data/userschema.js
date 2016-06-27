@@ -22,7 +22,11 @@ import  {
 } from 'graphql-relay'
 import database from './database';
 import User from '../js/models/User';
-import paginatedMongodbConnection, {paginatedDefinitions, paginatedArgs} from '../server/paginatedMongodbConnection';
+import  {
+    paginatedDefinitions,
+    paginatedArgs,
+    paginatedMongodbConnection
+} from '../server/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
 import {toMongoId} from '../server/serverUtils'
@@ -37,7 +41,7 @@ const UserSchema = (db) => {
 
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
-      async (globalId) => {
+      async(globalId) => {
         const {type, id} = fromGlobalId(globalId);
 
         switch (type) {
@@ -77,8 +81,8 @@ const UserSchema = (db) => {
     fields: () =>({
       // relay helper to generate
       id: globalIdField("Store"),
-      userConnection: {
-        type: userConnection.connectionType,
+      userConnectionPaginated: {
+        type: userConnectionPaginated.connectionType,
         //relay helper ,extend it
         args: {
           // ...connectionArgs,  //first.. last etc
@@ -132,12 +136,12 @@ const UserSchema = (db) => {
     interfaces: [nodeInterface]
   });
 
-  // let userConnection = connectionDefinitions({
+  // let userConnectionPaginated = connectionDefinitions({
   //   name: 'User',
   //   nodeType: GraphQLUser
   // });
 
-  let userConnection = paginatedDefinitions({
+  let userConnectionPaginated = paginatedDefinitions({
     name: 'User',
     nodeType: GraphQLUser
   });
@@ -158,7 +162,7 @@ const UserSchema = (db) => {
 
       // newUserEdge: {
       userEdge: {
-        type: userConnection.edgeType,
+        type: userConnectionPaginated.edgeType,
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
@@ -201,7 +205,7 @@ const UserSchema = (db) => {
         }
       },
       userEdge: {
-        type: userConnection.edgeType,
+        type: userConnectionPaginated.edgeType,
         // receives obj from below          insertedCount
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
@@ -249,7 +253,7 @@ const UserSchema = (db) => {
     outputFields: {
       //todo its a description of the query on the left
       userEdge: {
-        type: userConnection.edgeType,
+        type: userConnectionPaginated.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
           // return ({node: obj.value, cursor: obj.value._id})
@@ -311,7 +315,7 @@ const UserSchema = (db) => {
     outputFields: {
       //todo its a description of the query on the left
       userEdge: {
-        type: userConnection.edgeType,
+        type: userConnectionPaginated.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
           // return ({node: obj.value, cursor: obj.value._id})

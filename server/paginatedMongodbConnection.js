@@ -23,7 +23,7 @@ export const paginatedArgs = {
   , id: {
     type: GraphQLString
   }
-}
+};
 
 function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE}) {
   if (page < 1) {
@@ -55,15 +55,7 @@ var pageInfoType = new GraphQLObjectType({
     hasPreviousPage: {
       type: new GraphQLNonNull(GraphQLBoolean),
       description: 'When paginating backwards, are there more items?'
-    },
-    // startCursor: {
-    //   type: GraphQLString,
-    //   description: 'When paginating backwards, the cursor to continue.'
-    // },
-    // endCursor: {
-    //   type: GraphQLString,
-    //   description: 'When paginating forwards, the cursor to continue.'
-    // }
+    }
   })
 });
 
@@ -73,8 +65,6 @@ export function paginatedDefinitions(config) {
   var edgeFields = config.edgeFields || {};
   var connectionFields = config.connectionFields || {};
   var resolveNode = config.resolveNode;
-  var resolveCursor = config.resolveCursor;
-
 
   var edgeType = new GraphQLObjectType({
     name: name + 'Edge',
@@ -85,18 +75,14 @@ export function paginatedDefinitions(config) {
         resolve: resolveNode,
         description: 'The item at the end of the edge',
       },
-      cursor: {
-        type: new GraphQLNonNull(GraphQLString),
-        resolve: resolveCursor,
-        description: 'A cursor for use in pagination'
-      },
+
       ...(resolveMaybeThunk(edgeFields))
     })
   })
 
 
   var connectionType = new GraphQLObjectType({
-    name: name + 'Connection',
+    name: name + 'ConnectionPaginated',
     description: 'A connection to a list of items.',
     fields: () => ({
       pageInfoPaginated: {  //  changed the name to avoid graphql internal validation that requires certain field arguments
@@ -117,20 +103,24 @@ export function paginatedDefinitions(config) {
 
 }
 
-export default async function paginatedMongodbConnection(collection, args) {
+
+export async function paginatedMongodbConnection(collection, args) {
   const findParams = {};
 
-  let offset, limit, currentPage;
+  let offset, limit, currentPage, totalNumRecordsPromise, totalNumRecords;
 
   const {id} = args;
 
+  //  id takes precedence over other field arguments
   if (id) {
     findParams._id = toMongoId(id);
-    //  multiple entities with the same id is not supported
+    //  multiple entitiesPromise with the same id is not supported
     offset = 0;
     limit = 1;
     //currentPage - irrelevant
+    //totalNumRecordsPromise - irrelevant
   } else {
+    totalNumRecordsPromise = collection.count();
     const params = calcPaginationParams(args);
 
     offset = params.offset;
@@ -138,27 +128,25 @@ export default async function paginatedMongodbConnection(collection, args) {
     currentPage = params.currentPage;
   }
 
+  const entitiesPromise = collection.find(findParams).skip(offset).limit(limit).toArray();
 
-  const entities = await collection.find(findParams).skip(offset).limit(limit).toArray();
-  const totalNumRecords = id ? -1 : await collection.count();
+  let pageInfo;
+  if (id) {
+    //  multiple entitiesPromise with the same id is not supported
+    pageInfo = {hasPreviousPage: false, hasNextPage: false}
+  } else {
+    totalNumRecords = await totalNumRecordsPromise;
+    pageInfo = {
+      hasPreviousPage: totalNumRecords != 0 && currentPage > 1,
+      hasNextPage: currentPage * limit < totalNumRecords
+    };
+  }
 
-  const edges = entities.map((node) => ({
-    node,
-    cursor: '' // required -> exists, not null, graphql auto queries this field along with the connection
-  }));
-
-  //  multiple entities with the same id is not supported
-  const pageInfo = id ? {hasPreviousPage: false, hasNextPage: false}
-      : {hasPreviousPage: totalNumRecords != 0 && currentPage > 1, hasNextPage: currentPage * limit < totalNumRecords};
-
+  const entities = await entitiesPromise;
 
   return {
-    edgesPaginated: edges,
+    edgesPaginated: entities.map(node => ({node})),
     pageInfoPaginated: pageInfo
-    // pageInfoPaginated: {
-    //   ...pageInfo,
-    //   // startCursor: null, endCursor: null
-    // }
   }
 
 }

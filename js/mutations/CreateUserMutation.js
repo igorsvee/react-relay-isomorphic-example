@@ -21,12 +21,12 @@ class CreateUserMutation extends Relay.Mutation {
   }
 
   // userEdge,
-  // store { userConnection { pageInfoPaginated, edgesPaginated { node { username,address,password,activated } } } }
+  // store { userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { username,address,password,activated } } } }
   getFatQuery() {
     return Relay.QL`
        fragment on CreateUserPayload {
             userEdge,
-          store{    userConnection { edgesPaginated { node { id, username,address,password,activated } }      }     } 
+          store{    userConnectionPaginated { edgesPaginated { node { id, username,address,password,activated } }      }     } 
           
        }
        `
@@ -48,7 +48,7 @@ class CreateUserMutation extends Relay.Mutation {
   //     //  comes from fat query
   //     parentName: 'store',
   //     parentID: this.props.store.id,
-  //     connectionName: 'userConnection',
+  //     connectionName: 'userConnectionPaginated',
   //     // edgeName: 'newUserEdge',
   //     edgeName: 'userEdge',
   //     rangeBehaviors: {
@@ -58,7 +58,7 @@ class CreateUserMutation extends Relay.Mutation {
   //   }];
   // }
 
-  // this.props.store.userConnection.edgesPaginated
+  // this.props.store.userConnectionPaginated.edgesPaginated
 
         
   getOptimisticResponse() {
@@ -70,14 +70,14 @@ class CreateUserMutation extends Relay.Mutation {
       activated: false
     };
 
-    const currentEdgesLength = this.props.store.userConnection.edgesPaginated.length;
+    const currentEdgesLength = this.props.store.userConnectionPaginated.edgesPaginated.length;
 
     return {
       store: {
         id: this.props.store.id,
 
-        userConnection: {
-          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnection.edgesPaginated.push({node:newNode,optimistic:true})
+        userConnectionPaginated: {
+          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnectionPaginated.edgesPaginated.push({node:newNode,optimistic:true})
 
         }
 
@@ -99,7 +99,7 @@ class CreateUserMutation extends Relay.Mutation {
   //   return {
   //     store: {
   //       id: this.props.store.id,
-  //       userConnection: {
+  //       userConnectionPaginated: {
   //         edgesPaginated: {
   //           node: {
   //             // id: 'fuck',

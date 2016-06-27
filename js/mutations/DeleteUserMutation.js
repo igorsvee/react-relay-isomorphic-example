@@ -24,7 +24,7 @@ class DeleteUserMutation extends Relay.Mutation {
     // userEdge,
     return Relay.QL`
        fragment on DeleteUserPayload  {
-          store{    userConnection { edgesPaginated { node { id, username,address,password,activated } }      }     } 
+          store{    userConnectionPaginated { edgesPaginated { node { id, username,address,password,activated } }      }     } 
            }
        
        `
@@ -44,7 +44,7 @@ class DeleteUserMutation extends Relay.Mutation {
   //     type: 'NODE_DELETE',
   //     parentName: 'store',
   //     parentID: this.props.store.id,
-  //     connectionName: 'userConnection',
+  //     connectionName: 'userConnectionPaginated',
   //
   //     //The field name in the server response  that contains the DataID of the deleted node
   //     deletedIDFieldName: 'userId',
@@ -54,7 +54,7 @@ class DeleteUserMutation extends Relay.Mutation {
 
   getOptimisticResponse() {
     /*
-     const newEdges = this.props.store.userConnection.edgesPaginated.filter((userEdge) => {
+     const newEdges = this.props.store.userConnectionPaginated.edgesPaginated.filter((userEdge) => {
      return userEdge.node.__dataID__ !== this.props.userId
      });
 
@@ -62,17 +62,17 @@ class DeleteUserMutation extends Relay.Mutation {
      // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
 
      })
-     this.props.store.userConnection.edgesPaginated.forEach((edge) => {
+     this.props.store.userConnectionPaginated.edgesPaginated.forEach((edge) => {
      // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
      })
 
-     const indexOfEdge = this.props.store.userConnection.edgesPaginated.findIndex(userEdge => {
+     const indexOfEdge = this.props.store.userConnectionPaginated.edgesPaginated.findIndex(userEdge => {
      return userEdge.node.__dataID__ == this.props.userId
      })
 
-     console.log("before this.props.store.userConnection.edgesPaginated %O", this.props.store.userConnection.edgesPaginated)
-     // this.props.store.userConnection.edgesPaginated.splice(indexOfEdge,1);
-     console.log("after this.props.store.userConnection.edgesPaginated %O", this.props.store.userConnection.edgesPaginated)
+     console.log("before this.props.store.userConnectionPaginated.edgesPaginated %O", this.props.store.userConnectionPaginated.edgesPaginated)
+     // this.props.store.userConnectionPaginated.edgesPaginated.splice(indexOfEdge,1);
+     console.log("after this.props.store.userConnectionPaginated.edgesPaginated %O", this.props.store.userConnectionPaginated.edgesPaginated)
 
      */
     return {
@@ -80,7 +80,7 @@ class DeleteUserMutation extends Relay.Mutation {
       store: {
         id: this.props.store.id,
 
-        userConnection: {
+        userConnectionPaginated: {
           edgesPaginated: {
             node: {
               //  id == username ? ignore, else - render
