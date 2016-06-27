@@ -5,7 +5,7 @@ import {
     GraphQLString,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLID
+    GraphQLID, GraphQLFloat
     , GraphQLBoolean
 } from 'graphql'
 import  {
@@ -22,6 +22,7 @@ import  {
 } from 'graphql-relay'
 import database from './database';
 import User from '../js/models/User';
+import Product from '../js/models/Product';
 import  {
     paginatedDefinitions,
     paginatedArgs,
@@ -37,7 +38,7 @@ const UserSchema = (db) => {
   }
   const store = new Store();
 
-  const UserDao = database(db);
+  const dbDao = database(db);
 
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
@@ -50,12 +51,21 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await UserDao.getUserById(toMongoId(id));
+            const userDb = await dbDao.getUserById(toMongoId(id));
 
             const userEntity = new User(userDb);
 
             console.log(userEntity);
             return userEntity;
+
+          case 'Product':
+            console.log("in Product, id:" + id);
+            const productDB = await dbDao.getProductById(toMongoId(id));
+
+            const productEntity = new User(productDB);
+
+            console.log(productEntity);
+            return productEntity;
           default:
             return null;
         }
@@ -66,9 +76,14 @@ const UserSchema = (db) => {
       obj => {
         if (obj instanceof Store) {
           return GraphQLStore;
-        } else if (obj instanceof User) {
+        } else if (obj instanceof Product) {
+          return GraphQLProduct
+        }
+        else if (obj instanceof User) {
           return GraphQLUser;
-        } else {
+        }
+
+        else {
           console.log("unknown instance %O", obj)
           return null;
         }
@@ -90,7 +105,10 @@ const UserSchema = (db) => {
         },
 
         resolve: async(_, args) => {
-          return await paginatedMongodbConnection(db.collection("users"), args)
+          const findParams ={};
+
+
+          return await paginatedMongodbConnection(db.collection("users"), args ,findParams)
         }
       }
 
@@ -101,6 +119,71 @@ const UserSchema = (db) => {
 
   });
 
+  //todo to be used
+  const GraphQLDetails = new GraphQLObjectType({
+    name: 'Details',
+    fields: {
+      weight: {
+        type: GraphQLFloat,
+        resolve: (obj) => obj.weight
+      }
+      ,
+      inStock: {
+        type: GraphQLInt,
+        resolve: (obj) => obj.inStock
+      }
+
+
+    },
+    // interfaces: [nodeInterface]
+  });
+
+  const GraphQLProduct = new GraphQLObjectType({
+    name: 'Product',
+    fields: {
+      //  for connection it requires an id
+      id: globalIdField('Product', user => user._id),
+
+      name: {
+        type: new GraphQLNonNull(GraphQLString),
+        resolve: (obj) => obj.name
+      }
+      ,
+      description: {
+        type: GraphQLString,
+        resolve: (obj) => obj.description
+      }
+
+      ,
+      details: {
+        type: GraphQLDetails,
+        resolve: (obj) => obj.details
+      }
+      ,
+      reviews: {
+        type: new GraphQLList(GraphQLID),
+        resolve: (obj) => obj.reviews
+      },
+      category_ids: {
+        type: new GraphQLList(GraphQLID),
+        resolve: (obj) => obj.category_ids
+      }
+      // total_reviews: {
+      //   type: new GraphQLInt,
+      //   resolve: (obj) => obj.total_reviews
+      // }
+      // , average_review: {
+      //   type: new GraphQLFloat,
+      //   resolve: (obj) => obj.average_review
+      // }
+      // ,total_reviews: 4,
+      // average_review: 4.5,
+
+    },
+    interfaces: [nodeInterface]
+  });
+  
+  //  --  //
 
   const GraphQLUser = new GraphQLObjectType({
     name: 'User',

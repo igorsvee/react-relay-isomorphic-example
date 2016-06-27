@@ -10,9 +10,16 @@ export default   (db) => {
         .next();
 
   }
+  
+  function getProductById(id){
+    return db.collection("products")
+        .find({_id: id})
+        .limit(1)
+        .next();
+  }
 
   return {
-    getUserById
+    getUserById, getProductById
   }
 };
 

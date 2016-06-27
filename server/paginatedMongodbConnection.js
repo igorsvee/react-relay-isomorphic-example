@@ -18,7 +18,6 @@ export const paginatedArgs = {
   },
   limit: {
     type: GraphQLInt
-
   }
   , id: {
     type: GraphQLString
@@ -30,7 +29,7 @@ function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE
     throw new Error("Page starts with 1")
   }
   if (limit < 1) {
-    throw new Error("Records starts with 1")
+    throw new Error("Limit starts with 1")
   }
 
   return {
@@ -104,37 +103,40 @@ export function paginatedDefinitions(config) {
 }
 
 
-export async function paginatedMongodbConnection(collection, args) {
-  const findParams = {};
+export async function paginatedMongodbConnection(collection, args, findParams) {
+  // const findParams = {};
+  function requestEntities(findParams, offset, limit) {
+    return collection.find(findParams).skip(offset).limit(limit).toArray()
+  }
 
-  let offset, limit, currentPage, totalNumRecordsPromise, totalNumRecords;
+  let offset, limit, currentPage, totalNumRecordsPromise, totalNumRecords, entitiesPromise, pageInfo;
 
   const {id} = args;
 
   //  id takes precedence over other field arguments
   if (id) {
     findParams._id = toMongoId(id);
-    //  multiple entitiesPromise with the same id is not supported
+    //  multiple entities with the same id is not supported
     offset = 0;
     limit = 1;
     //currentPage - irrelevant
     //totalNumRecordsPromise - irrelevant
+
+    entitiesPromise = requestEntities(findParams, offset, limit);
+
+    pageInfo = {hasPreviousPage: false, hasNextPage: false};
+
   } else {
     totalNumRecordsPromise = collection.count();
     const params = calcPaginationParams(args);
 
     offset = params.offset;
     limit = params.limit;
+
+    entitiesPromise = requestEntities(findParams, offset, limit);
+
     currentPage = params.currentPage;
-  }
 
-  const entitiesPromise = collection.find(findParams).skip(offset).limit(limit).toArray();
-
-  let pageInfo;
-  if (id) {
-    //  multiple entitiesPromise with the same id is not supported
-    pageInfo = {hasPreviousPage: false, hasNextPage: false}
-  } else {
     totalNumRecords = await totalNumRecordsPromise;
     pageInfo = {
       hasPreviousPage: totalNumRecords != 0 && currentPage > 1,

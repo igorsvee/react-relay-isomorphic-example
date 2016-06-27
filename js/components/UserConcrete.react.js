@@ -14,7 +14,7 @@ class UserConcrete extends React.Component {
 
   static propTypes = {
     userId: React.PropTypes.string.isRequired,
-  } ;
+  };
 
   constructor(props, context) {
     super(props, context);
@@ -138,14 +138,16 @@ class UserConcrete extends React.Component {
     //  won't change, using it
     const id = userStore.id;
 
-    const username = this.propertyChanged('username') ? this.state.username : userStore.username;
-    const address = this.propertyChanged('address') ? this.state.address : userStore.address;
+    const newUsername = this.propertyChanged('username') ? this.state.username : userStore.username;
+    const newAddress = this.propertyChanged('address') ? this.state.address : userStore.address;
 
-    console.log("Update user %O...", {username, address, id});
+    console.log("Updated user %O...", {newUsername, newAddress, id});
 
     const updateMutation = new UpdateUserMutation(
         {
-          username, id, address
+          username: newUsername,
+          id,
+          address: newAddress
           , storeId: this.props.store.id
         }
     );
@@ -153,28 +155,27 @@ class UserConcrete extends React.Component {
     commitUpdate(Relay.Store, updateMutation)
         .then((resp)=>console.log("Updated successfully!"))
         .catch((transaction) =>console.log("Failed update"))
+        .finally(this.turnOffEditMode)
 
-    this.turnOffEditMode();
+    ;
   }
 
   turnOffEditMode() {
     this.setState({editMode: false});
   }
 
-  updateUserStateFromProps(props = this.props) {
-    const user = this.getUserFromProps(props);
+  updateUserStateFromProps(props = this.props, cb) {
+    const {username, address} = this.getUserFromProps(props);
 
     this.setState({
-      username: user.username,
-      address: user.address
-    })
+      username,
+      address
+    }, cb)
   }
 
   handleCancelChanges() {
-    this.updateUserStateFromProps();
-    this.turnOffEditMode();
+    this.updateUserStateFromProps(this.props, this.turnOffEditMode);
   }
-
 
   render() {
     if (!this.propsContainUser()) {
