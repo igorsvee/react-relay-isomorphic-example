@@ -105,10 +105,9 @@ const UserSchema = (db) => {
         },
 
         resolve: async(_, args) => {
-          const findParams ={};
 
 
-          return await paginatedMongodbConnection(db.collection("users"), args ,findParams)
+          return await paginatedMongodbConnection(db.collection("users"), args, {})
         }
       }
 
@@ -142,7 +141,7 @@ const UserSchema = (db) => {
     name: 'Product',
     fields: {
       //  for connection it requires an id
-      id: globalIdField('Product', user => user._id),
+      id: globalIdField('Product', product => product._id),
 
       name: {
         type: new GraphQLNonNull(GraphQLString),
@@ -182,7 +181,7 @@ const UserSchema = (db) => {
     },
     interfaces: [nodeInterface]
   });
-  
+
   //  --  //
 
   const GraphQLUser = new GraphQLObjectType({
@@ -264,8 +263,7 @@ const UserSchema = (db) => {
 
 
     , mutateAndGetPayload: ({username, address, password}) => {
-      console.log("inserting: " + {username, address, password})
-      //  we nee dot return a promise
+      console.log("inserting: %O", {username, address, password})
       return db.collection("users").insertOne({username, address, password, activated: false});
     }
   })

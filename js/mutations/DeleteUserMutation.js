@@ -24,7 +24,7 @@ class DeleteUserMutation extends Relay.Mutation {
     // userEdge,
     return Relay.QL`
        fragment on DeleteUserPayload  {
-          store{    userConnectionPaginated { edgesPaginated { node { id, username,address,password,activated } }      }     } 
+          store{    userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
            }
        
        `

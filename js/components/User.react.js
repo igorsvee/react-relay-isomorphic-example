@@ -34,14 +34,14 @@ class User extends React.Component {
       const deleteMutation = new DeleteUserMutation(
           {
             userId: id,
-            store: this.props.store,
-            relayVariables: this.props.relayVariables
+            store: this.props.store
           }
       );
 
       commitUpdate(Relay.Store, deleteMutation)
-          .then((resp)=>console.log("Deleted successfully!"))
+          .then((resp)=> this.props.afterDelete())
           .catch((transaction) =>console.log("Failed deletion"))
+
 
     }
   }
@@ -65,7 +65,7 @@ class User extends React.Component {
   }
 
   render() {
-    const {user,relay} = this.props;
+    const {user, relay} = this.props;
     const relayUserId = user.id;
     const currentUsername = user.username;
     if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
@@ -80,17 +80,17 @@ class User extends React.Component {
           <td>{currentUsername}</td>
           <td>{user.address}</td>
           <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated ?
-              <button onClick={this.setUserActivation(relayUserId,false)}>Deactivate</button>
-              : <button onClick={this.setUserActivation(relayUserId,true)}>Activate</button>
+              <button onClick={this.setUserActivation(relayUserId, false)}>Deactivate</button>
+              : <button onClick={this.setUserActivation(relayUserId, true)}>Activate</button>
 
           }</td>
           <td>
             <button onClick={this.handleDetailsClick(relayUserId)}>Details</button>
           </td>
           <td>
-            <button onClick={this.handleDeleteClick(relayUserId )}>X</button>
+            <button onClick={this.handleDeleteClick(relayUserId)}>X</button>
           </td>
-          {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
+            {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
         </tr>
 
 

@@ -21,12 +21,11 @@ class CreateUserMutation extends Relay.Mutation {
   }
 
   // userEdge,
-  // store { userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { username,address,password,activated } } } }
   getFatQuery() {
     return Relay.QL`
        fragment on CreateUserPayload {
             userEdge,
-          store{    userConnectionPaginated { edgesPaginated { node { id, username,address,password,activated } }      }     } 
+          store{    userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
           
        }
        `
@@ -78,7 +77,6 @@ class CreateUserMutation extends Relay.Mutation {
 
         userConnectionPaginated: {
           edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnectionPaginated.edgesPaginated.push({node:newNode,optimistic:true})
-
         }
 
       },

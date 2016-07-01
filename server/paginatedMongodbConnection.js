@@ -43,7 +43,7 @@ function resolveMaybeThunk(thingOrThunk) {
   return typeof thingOrThunk === 'function' ? thingOrThunk() : thingOrThunk;
 }
 
-var pageInfoType = new GraphQLObjectType({
+const pageInfoType = new GraphQLObjectType({
   name: 'PageInfo',
   description: 'Information about pagination in a connection.',
   fields: () => ({
@@ -61,11 +61,11 @@ var pageInfoType = new GraphQLObjectType({
 export function paginatedDefinitions(config) {
   const {nodeType} = config;
   const name = config.name || nodeType.name;
-  var edgeFields = config.edgeFields || {};
-  var connectionFields = config.connectionFields || {};
-  var resolveNode = config.resolveNode;
+  const edgeFields = config.edgeFields || {};
+  const connectionFields = config.connectionFields || {};
+  const resolveNode = config.resolveNode;
 
-  var edgeType = new GraphQLObjectType({
+  const edgeType = new GraphQLObjectType({
     name: name + 'Edge',
     description: 'An edge in a connection.',
     fields: () => ({
@@ -80,7 +80,7 @@ export function paginatedDefinitions(config) {
   })
 
 
-  var connectionType = new GraphQLObjectType({
+  const connectionType = new GraphQLObjectType({
     name: name + 'ConnectionPaginated',
     description: 'A connection to a list of items.',
     fields: () => ({
@@ -103,37 +103,48 @@ export function paginatedDefinitions(config) {
 }
 
 
-export async function paginatedMongodbConnection(collection, args, findParams) {
-  // const findParams = {};
-  function requestEntities(findParams, offset, limit) {
-    return collection.find(findParams).skip(offset).limit(limit).toArray()
+export async function paginatedMongodbConnection(collection, args, config) {
+
+  function requestEntities(config) {
+    const offset = config.offset || 0;
+    const limit = config.limit || 0;
+    const findParams = config.findParams || {};
+
+    const sort = config.sort || undefined;
+    const options = config.options || undefined;
+
+    return collection.find(findParams, options).sort(sort).skip(offset).limit(limit).toArray()
+  }
+
+  function requestTotalNumRecords() {
+    return collection.count();
   }
 
   let offset, limit, currentPage, totalNumRecordsPromise, totalNumRecords, entitiesPromise, pageInfo;
 
+  const findParams = config && config.findParams || {};
   const {id} = args;
 
   //  id takes precedence over other field arguments
   if (id) {
-    findParams._id = toMongoId(id);
-    //  multiple entities with the same id is not supported
-    offset = 0;
-    limit = 1;
-    //currentPage - irrelevant
-    //totalNumRecordsPromise - irrelevant
-
-    entitiesPromise = requestEntities(findParams, offset, limit);
-
     pageInfo = {hasPreviousPage: false, hasNextPage: false};
 
+    findParams._id = toMongoId(id);
+    offset = 0;
+    //  multiple entities with the same id is not supported
+    limit = 1;
+    entitiesPromise = requestEntities({
+      findParams, offset, limit
+    });
+
   } else {
-    totalNumRecordsPromise = collection.count();
+    totalNumRecordsPromise = requestTotalNumRecords();
     const params = calcPaginationParams(args);
 
     offset = params.offset;
     limit = params.limit;
 
-    entitiesPromise = requestEntities(findParams, offset, limit);
+    entitiesPromise = requestEntities({findParams, offset, limit});
 
     currentPage = params.currentPage;
 

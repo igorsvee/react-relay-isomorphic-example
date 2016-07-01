@@ -21,6 +21,13 @@ class Users extends React.Component {
     }
   }
 
+  afterDelete() {
+    const {limit, page} = this.props.relay.variables;
+    if (limit == 1 && page > 1) {
+      this.handlePrevPage();
+    }
+  }
+
   getUsers() {
     if (!this.hasUsers()) {
       return <tr>
@@ -32,15 +39,15 @@ class Users extends React.Component {
       if (edge.node.__dataID__ == null) {// newly create node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
-        return <User store={this.props.store}
+        return <User store={this.props.store} afterDelete={this.afterDelete}
                      user={edge.node}/>
       }
 
     })
   }
-                    
+
   componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps this.props.store.userConnectionPaginated.edgesPaginated %O next %O", this.props.store.userConnectionPaginated.edgesPaginated, nextProps.store.userConnectionPaginated.edgesPaginated)
+    console.log("componentWillReceiveProps this.props.store.userConnectionPaginated.edgesPaginated  %O next %O", this.props.store.userConnectionPaginated.edgesPaginated, nextProps.store.userConnectionPaginated.edgesPaginated)
   }
 
   //optimistic update
@@ -59,7 +66,6 @@ class Users extends React.Component {
 
 
     return true;
-
   }
 
   handleSubmit(e) {
@@ -159,16 +165,16 @@ class Users extends React.Component {
             <input ref="address" type="text" placeholder="address"/>
             <button type="submit">Create</button>
 
-            { /*
-             [RelayMutationQueue] access transactions after callback has been called #1221
+                { /*
+                 [RelayMutationQueue] access transactions after callback has been called #1221
 
-             {  createTransaction && createTransaction.getStatus() === 'COMMIT_FAILED' &&
-             <h3>Creation failed {this.state.errorMessage}
-             <button onClick={() =>  createTransaction.recommit()}>Retry</button>
-             </h3>
-             }
+                 {  createTransaction && createTransaction.getStatus() === 'COMMIT_FAILED' &&
+                 <h3>Creation failed {this.state.errorMessage}
+                 <button onClick={() =>  createTransaction.recommit()}>Retry</button>
+                 </h3>
+                 }
 
-             */}
+                 */}
 
 
           </form>
