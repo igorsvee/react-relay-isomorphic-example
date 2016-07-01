@@ -68,7 +68,8 @@ class CreateUserMutation extends Relay.Mutation {
 
     const newEdge = {
       node: {
-        id: this.props.newUserId, // irrelevant
+        // id: this.props.newUserId, // irrelevant
+        id: null,
         username: this.props.username,
         address: this.props.address,
         password: this.props.password,
