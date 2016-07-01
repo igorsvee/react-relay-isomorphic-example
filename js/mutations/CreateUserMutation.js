@@ -20,12 +20,13 @@ class CreateUserMutation extends Relay.Mutation {
     }
   }
 
-  // userEdge,
+
+  //  newUserEdge ,newUserId  ,
   getFatQuery() {
     return Relay.QL`
        fragment on CreateUserPayload {
-            userEdge,
-          store{    userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
+           
+          store{ id   userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
           
        }
        `
@@ -36,6 +37,7 @@ class CreateUserMutation extends Relay.Mutation {
       type: 'FIELDS_CHANGE',
       fieldIDs: {
         store: this.props.store.id,
+        // newUserEdge: this.props.newUserId,
       }
     }];
   }
@@ -48,8 +50,8 @@ class CreateUserMutation extends Relay.Mutation {
   //     parentName: 'store',
   //     parentID: this.props.store.id,
   //     connectionName: 'userConnectionPaginated',
-  //     // edgeName: 'newUserEdge',
-  //     edgeName: 'userEdge',
+  //     edgeName: 'newUserEdge',
+  //     // edgeName: 'userEdge',
   //     rangeBehaviors: {
   //       '': 'append'
   //
@@ -59,60 +61,36 @@ class CreateUserMutation extends Relay.Mutation {
 
   // this.props.store.userConnectionPaginated.edgesPaginated
 
-        
+
   getOptimisticResponse() {
-    const newNode = {
-      id: null,
-      username: this.props.username,
-      address: this.props.address,
-      password: this.props.password,
-      activated: false
+    const currentEdges = this.props.store.userConnectionPaginated.edgesPaginated;
+    const currentEdgesLength = currentEdges.length;
+
+    const newEdge = {
+      node: {
+        id: this.props.newUserId, // irrelevant
+        username: this.props.username,
+        address: this.props.address,
+        password: this.props.password,
+        activated: false
+      }
+      , optimistic: true
     };
 
-    const currentEdgesLength = this.props.store.userConnectionPaginated.edgesPaginated.length;
-
     return {
+      // newUserEdge: newEdge,
       store: {
         id: this.props.store.id,
 
         userConnectionPaginated: {
-          edgesPaginated: currentEdgesLength + 1 <= this.props.limit && this.props.store.userConnectionPaginated.edgesPaginated.push({node:newNode,optimistic:true})
+          edgesPaginated: currentEdgesLength < this.props.limit && currentEdges.push(newEdge)
         }
 
-      },
-      // userEdge: {
-      //   node: {
-      //     id: null,
-      //     username: this.props.username,
-      //     address: this.props.address,
-      //     password: this.props.password,
-      //     activated: false
-      //   } ,notCreated:true
-      // }
+      }
+
     }
 
   }
-
-  // getOptimisticResponse() {
-  //   return {
-  //     store: {
-  //       id: this.props.store.id,
-  //       userConnectionPaginated: {
-  //         edgesPaginated: {
-  //           node: {
-  //             // id: 'fuck',
-  //             username: this.props.username,
-  //             address: this.props.address,
-  //             password: this.props.password,
-  //             activated: false
-  //           }
-  //         }
-  //
-  //       }
-  //     }
-  //
-  //   }
-  // }
 
 
 }

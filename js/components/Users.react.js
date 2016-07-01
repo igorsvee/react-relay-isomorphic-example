@@ -17,7 +17,8 @@ class Users extends React.Component {
 
     this.state = {
       createTransaction: null,
-      errorMessage: null
+      errorMessage: null,
+      paginationError: null
     }
   }
 
@@ -36,7 +37,7 @@ class Users extends React.Component {
     }
 
     return this.props.store.userConnectionPaginated.edgesPaginated.map((edge, ind) => {
-      if (edge.node.__dataID__ == null) {// newly create node by optimistic mutation would not have this property
+      if (!edge.node.__dataID__) {// newly create node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
         return <User store={this.props.store} afterDelete={this.afterDelete}
@@ -54,11 +55,10 @@ class Users extends React.Component {
   shouldComponentUpdate(nextProps) {
     if (this.hasUsers()) {
       const currentEdges = this.props.store.userConnectionPaginated.edgesPaginated;
-      const lastEdge = currentEdges[currentEdges.length - 1];
-
+      const currentLastEdge = currentEdges[currentEdges.length - 1];
       const nextEdges = nextProps.store.userConnectionPaginated.edgesPaginated;
 
-      if (lastEdge.optimistic && currentEdges.length > nextEdges.length) {
+      if (currentLastEdge.optimistic && currentEdges.length > nextEdges.length) {
         console.log("NOT Rerendering Users")
         return false;
       }
@@ -109,7 +109,12 @@ class Users extends React.Component {
 
 
   handleNextPage() {
-    this.props.relay.setVariables({page: this.props.relay.variables.page + 1})
+    this.props.relay.setVariables({page: this.props.relay.variables.page + 1}, (readyState) => {
+      if (readyState.error) {
+        this.setState({paginationError: readyState.error.message})
+      }
+
+    })
   }
 
   handlePrevPage() {
@@ -139,6 +144,8 @@ class Users extends React.Component {
     )
   }
 
+
+  // ready{this.state.readyState && this.state.readyState.ready}, done  {this.state.readyState &&this.state.readyState.done} error{this.state.readyState &&this.state.readyState.error}
   render() {
     const {relay, store} = this.props;
     const {createTransaction} = this.state;
@@ -148,6 +155,7 @@ class Users extends React.Component {
     return (
         <div>
           <h2>Users
+
             page#{currentPage} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
 
           Limit: {currentLimit} {currentPage === 1 &&
@@ -184,7 +192,7 @@ class Users extends React.Component {
             <thead>
             <tr key="head">
               <th>
-                isd
+                id
               </th>
 
               <th>
@@ -210,6 +218,7 @@ class Users extends React.Component {
             </tfoot>
           </table>
 
+                 {this.state.paginationError && <h3>this.state.paginationError</h3>}
 
         </div>
     )

@@ -242,15 +242,30 @@ const UserSchema = (db) => {
 
     outputFields: {
 
-      // newUserEdge: {
-      userEdge: {
+      newUserEdge: {
+      // userEdge: {
         type: userConnectionPaginated.edgeType,
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
-        resolve: (obj) => ({node: obj.ops[0]})
+        resolve: (obj) => {
+                     // console.log("obj %O",obj)
+          console.log("created %O",obj.ops[0])
+          return ({node: obj.ops[0]})
+        }
 
+      } ,
+      //   ,
+      newUserId:{
+        type: new GraphQLNonNull(GraphQLString),
+        resolve: (obj) => {
+          console.log('newUserId '+obj.insertedId)
+
+          const relayId = toGlobalId('User', obj.insertedId)
+          console.log("relayId " + relayId)
+          return relayId;
+        }
       }
       //  user connections are rendered under the store type
       ,
@@ -264,7 +279,9 @@ const UserSchema = (db) => {
 
     , mutateAndGetPayload: ({username, address, password}) => {
       console.log("inserting: %O", {username, address, password})
-      return db.collection("users").insertOne({username, address, password, activated: false});
+      return db.collection("users").insertOne({username, address, password, activated: false}, {
+        safe: false,db: {forceServerObjectId: true}
+      });
     }
   })
 
