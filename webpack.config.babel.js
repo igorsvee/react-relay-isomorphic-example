@@ -9,6 +9,15 @@ module.exports = {
     path: __dirname + "/public",
     filename: "bundle.js"
   },
+
+  postcss: function (webpack) {
+    return [precss, autoprefixer
+      , postcssImport({
+        addDependencyTo: webpack
+      })
+    ];
+  },
+
   module: {
     loaders: [
       {
@@ -24,7 +33,26 @@ module.exports = {
 
       }
 
+    ,  {
+        test: /\.css$/,
+        // loaders: ['style', 'css?modules&localIdentName=[local]---[hash:base64:5]', 'cssnext'],  //  2st - css, 1 - css
+        // loaders: ['style', 'css?modules&localIdentName=[local]---[hash:base64:5]', 'cssnext'],  //  2st - css, 1 - css
+        loader: "style-loader!css-loader?modules&localIdentName=[local]---[hash:base64:5]&importLoaders=1!postcss-loader",
+        exclude: /node_modules/
+      }
+
+
       , {test: /\.json$/, loader: 'json-loader'}
+
+      // ,   {
+      //   test: /\.html$/,
+      //   loader: "html",
+      //   include: [
+      //     path.resolve(__dirname, "/public"),
+      //
+      //   ],
+      // }
+
     ]
   }
   , devtool: 'eval-source-map'
@@ -36,9 +64,8 @@ module.exports = {
     inline: true,
     progress: true
     , port: 5000
-  }    
-  
-  
+  }
+
 
   , node: {
     // tls: "empty",
@@ -57,7 +84,7 @@ module.exports = {
 
 
     new HtmlwebpackPlugin({
-      title: 'ADMIN_MODULE'
+      title: 'relay_app'
     })
   ]
 
