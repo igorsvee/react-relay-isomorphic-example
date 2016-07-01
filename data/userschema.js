@@ -218,7 +218,7 @@ const UserSchema = (db) => {
     interfaces: [nodeInterface]
   });
 
-  // let userConnectionPaginated = connectionDefinitions({
+  // let userConnection= connectionDefinitions({
   //   name: 'User',
   //   nodeType: GraphQLUser
   // });

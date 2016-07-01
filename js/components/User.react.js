@@ -21,6 +21,15 @@ class User extends React.Component {
     user: React.PropTypes.object.isRequired,
   };
 
+  constructor(props, context) {
+    super(props, context);
+
+    this.state = {
+      activationFailed: false
+      , deletionFailed: false
+    }
+  }
+
   handleDetailsClick(id) {
     return () => {
       this.context.router.push("/users/" + id);
@@ -40,7 +49,7 @@ class User extends React.Component {
 
       commitUpdate(Relay.Store, deleteMutation)
           .then((resp)=> this.props.afterDelete())
-          .catch((transaction) =>console.log("Failed deletion"))
+          .catch((transaction) => this._setDeleteErrorIfNotSet())
 
 
     }
@@ -57,29 +66,48 @@ class User extends React.Component {
       );
 
       commitUpdate(Relay.Store, activationMutation)
-          .then((resp)=>console.log("Activated successfully!"))
-          .catch((transaction) =>console.log("Failed activation"))
+          .then((resp)=> {
+            if (this.state.activationFailed) {
+              this.setState({activationFailed: false})
+            }
+          })
+          .catch((transaction) =>this._setActivationErrorIfNotSet())
 
     }
 
+  }
+
+  _setDeleteErrorIfNotSet() {
+    if (!this.state.deletionFailed) {
+      this.setState({deletionFailed: true})
+    }
+  }
+
+  _setActivationErrorIfNotSet() {
+    if (!this.state.activationFailed) {
+      this.setState({activationFailed: true})
+    }
   }
 
   render() {
     const {user, relay} = this.props;
     const relayUserId = user.id;
     const currentUsername = user.username;
+
+
+    let styles = {};
     if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
-      return null;
+      styles = {display: 'none'};  // hide instead of returning null so the component doesn't get unmounted and the state is kept
     }
 
     const mongoId = fromGlobalId(relayUserId).id;
 
-    return (
-        <tr key={relayUserId}>
+    return(
+        <tr style={styles} key={relayUserId}>
           <td>mongoId - {mongoId}, relayId - {relayUserId}</td>
           <td>{currentUsername}</td>
           <td>{user.address}</td>
-          <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated ?
+          <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated === true ?
               <button onClick={this.setUserActivation(relayUserId, false)}>Deactivate</button>
               : <button onClick={this.setUserActivation(relayUserId, true)}>Activate</button>
 
@@ -91,10 +119,12 @@ class User extends React.Component {
             <button onClick={this.handleDeleteClick(relayUserId)}>X</button>
           </td>
             {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
-        </tr>
+            {this.state.activationFailed && 'Activation Failed'}
+            {this.state.deletionFailed && 'Deletion Failed'}
+        </tr>)
 
 
-    )
+
   }
 }
 

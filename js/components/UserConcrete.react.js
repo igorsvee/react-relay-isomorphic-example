@@ -22,7 +22,8 @@ class UserConcrete extends React.Component {
     this.state = {
       editMode: false,
       username: '',
-      address: ''
+      address: '',
+      updateFailed: false
     };
 
   }
@@ -153,11 +154,17 @@ class UserConcrete extends React.Component {
     );
 
     commitUpdate(Relay.Store, updateMutation)
-        .then((resp)=>console.log("Updated successfully!"))
-        .catch((transaction) =>console.log("Failed update"))
+        .then((resp)=>this.setState({updateFailed: false}))
+        .catch((transaction) =>this._setUpdateErrorIfNotSet())
         .finally(this.turnOffEditMode)
 
     ;
+  }
+
+  _setUpdateErrorIfNotSet() {
+    if (!this.state.updateFailed) {
+      this.setState({updateFailed: true})
+    }
   }
 
   turnOffEditMode() {
@@ -210,7 +217,7 @@ class UserConcrete extends React.Component {
 
           {relay.hasOptimisticUpdate(store) && <h2>Updating...</h2>}
           {this.userWasEdited() && <h3>Has unsaved changes</h3>}
-
+          {this.state.updateFailed && 'Update failed'}
         </div>
     )
   }
