@@ -47,8 +47,8 @@ class User extends React.Component {
       );
 
 
-      const setErrorDeletionState = this._getStateThunkIfTruthy(this.state.deletionFailed === false, {deletionFailed: true});
-      const setSuccessfulDeletionState = this._getStateThunkIfTruthy(this.state.deletionFailed === true, {deletionFailed: false});
+      const setErrorDeletionState = this._setStateIfTruthy(this.state.deletionFailed === false, {deletionFailed: true});
+      const setSuccessfulDeletionState = this._setStateIfTruthy(this.state.deletionFailed === true, {deletionFailed: false});
 
       commitUpdate(Relay.Store, deleteMutation)
           .then(setSuccessfulDeletionState)
@@ -57,28 +57,11 @@ class User extends React.Component {
     }
   }
 
-  setUserActivation(userId, activated) {
-    return () => {
-      const activationMutation = new ToggleUserActivatedMutation(
-          {
-            userId,
-            activated
-            , storeId: this.props.store.id
-          }
-      );
+  activateUser = this._setUserActivation.bind(this, true);
+  deactivateUser = this._setUserActivation.bind(this, false);
 
-      const setErrorActivationState = this._getStateThunkIfTruthy(this.state.activationFailed === false, {activationFailed: true});
-      const setSuccessfulActivationState = this._getStateThunkIfTruthy(this.state.activationFailed === true, {activationFailed: false});
-      commitUpdate(Relay.Store, activationMutation)
-          .then(setSuccessfulActivationState)
-          .catch(setErrorActivationState)
-
-    }
-
-  }
-
-  _getStateThunkIfTruthy(cond, state) {
-    const thisFunc = this._getStateThunkIfTruthy;
+  _setStateIfTruthy(cond, state) {
+    const thisFunc = this._setStateIfTruthy;
     if (arguments.length < thisFunc.length) {
       return thisFunc.bind(...arguments)
     } else {
@@ -88,6 +71,26 @@ class User extends React.Component {
         }
       }
     }
+  }
+
+  _setUserActivation(activated, userId) {
+    return () => {
+      const activationMutation = new ToggleUserActivatedMutation(
+          {
+            userId,
+            activated
+            , storeId: this.props.store.id
+          }
+      );
+
+      const setErrorActivationState = this._setStateIfTruthy(this.state.activationFailed === false, {activationFailed: true});
+      const setSuccessfulActivationState = this._setStateIfTruthy(this.state.activationFailed === true, {activationFailed: false});
+      commitUpdate(Relay.Store, activationMutation)
+          .then(setSuccessfulActivationState)
+          .catch(setErrorActivationState)
+
+    }
+
   }
 
 
@@ -103,22 +106,21 @@ class User extends React.Component {
     }
 
     const mongoId = fromGlobalId(relayUserId).id;
+    const getButton = (title, clickHandler) => <button onClick={clickHandler}>{title}</button>
 
     return (
         <tr style={styles} key={relayUserId}>
           <td>mongoId - {mongoId}, relayId - {relayUserId}</td>
           <td>{currentUsername}</td>
           <td>{user.address}</td>
-          <td>         {user.activated === true ? 'YES' : 'NO'} {user.activated === true ?
-              <button onClick={this.setUserActivation(relayUserId, false)}>Deactivate</button>
-              : <button onClick={this.setUserActivation(relayUserId, true)}>Activate</button>
-
-          }</td>
-          <td>
-            <button onClick={this.handleDetailsClick(relayUserId)}>Details</button>
+          <td>         {user.activated ? 'YES' : 'NO'}
+                       {user.activated ? getButton('Deactivate', this.deactivateUser(relayUserId)) : getButton('Activate', this.activateUser(relayUserId)) }
           </td>
           <td>
-            <button onClick={this.handleDeleteClick(relayUserId)}>X</button>
+            {getButton('Details', this.handleDetailsClick(relayUserId))}
+          </td>
+          <td>
+            {getButton('X', this.handleDeleteClick(relayUserId))}
           </td>
             {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
             {this.state.activationFailed && 'Activation Failed'}

@@ -155,13 +155,13 @@ class UserConcrete extends React.Component {
 
     commitUpdate(Relay.Store, updateMutation)
         .then((resp)=>this.setState({updateFailed: false}))
-        .catch((transaction) =>this._setUpdateErrorIfNotSet())
+        .catch(this._setUpdateErrorIfNotSet)
         .finally(this.turnOffEditMode)
 
     ;
   }
 
-  _setUpdateErrorIfNotSet() {
+  _setUpdateErrorIfNotSet(transaction) {
     if (!this.state.updateFailed) {
       this.setState({updateFailed: true})
     }
