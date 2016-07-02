@@ -109,16 +109,14 @@ class Users extends React.Component {
 
 
   handleNextPage() {
-    this.props.relay.setVariables({page: this.props.relay.variables.page + 1}, (readyState) => {
-      if (readyState.error) {
-        this.setState({paginationError: readyState.error.message})
-      }
-
-    })
+    this._setRelayVariablesAndCb({page: this.props.relay.variables.page + 1}, this._processReadyState)
   }
 
+
+
+
   handlePrevPage() {
-    this.props.relay.setVariables({page: this.props.relay.variables.page - 1})
+    this._setRelayVariablesAndCb({page: this.props.relay.variables.page - 1}, this._processReadyState)
   }
 
   hasUsers() {
@@ -142,6 +140,16 @@ class Users extends React.Component {
           </td>}
         </tr>
     )
+  }
+
+  _setRelayVariablesAndCb(variables, cb) {
+    this.props.relay.setVariables({...variables}, cb)
+  }
+
+  _processReadyState(readyState) {
+    if (readyState.error) {
+      this.setState({paginationError: readyState.error.message})
+    }
   }
 
 
@@ -218,7 +226,7 @@ class Users extends React.Component {
             </tfoot>
           </table>
 
-                 {this.state.paginationError && <h3>this.state.paginationError</h3>}
+                 {this.state.paginationError && <h3>{this.state.paginationError}</h3>}
 
         </div>
     )

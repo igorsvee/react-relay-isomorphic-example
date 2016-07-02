@@ -63,7 +63,7 @@ class CreateUserMutation extends Relay.Mutation {
 
 
   getOptimisticResponse() {
-    const currentEdges = this.props.store.userConnectionPaginated.edgesPaginated;
+    const currentEdges = this.props.store.userConnection.edges;
     const currentEdgesLength = currentEdges.length;
 
     const newEdge = {
@@ -83,8 +83,8 @@ class CreateUserMutation extends Relay.Mutation {
       store: {
         id: this.props.store.id,
 
-        userConnectionPaginated: {
-          edgesPaginated: currentEdgesLength < this.props.limit && currentEdges.push(newEdge)
+        userConnection: {
+          edges: currentEdgesLength < this.props.limit && currentEdges.push(newEdge)
         }
 
       }
