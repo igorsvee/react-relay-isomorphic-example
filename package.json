@@ -62,6 +62,6 @@
     "postcss-import": "^8.1.2",
     "postcss-media-minmax": "^2.1.2",
     "precss": "^1.4.0",
-    "autoprefixer": "^6.3.6"
+    "autoprefixer": "^6.3.6"   ,"style-loader": "^0.13.0"  , "react-styleable" : "^2.2.4" ,"postcss-selector-not" :"^2.0.0"
   }
 }

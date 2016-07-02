@@ -3,6 +3,10 @@ import Relay from 'react-relay';
 
 import {Link} from 'react-router';
 
+import css from './UserApp.css'
+
+import styleable from 'react-styleable'
+@styleable(css)
 class UserApp extends React.Component {
 
   shouldComponentUpdate(nextProps){
@@ -12,12 +16,14 @@ class UserApp extends React.Component {
   render() {
     return (
         <div>
-          <h1>User app root</h1>
-          <ul>
-            <li><Link to="/users">Users</Link></li>
-          </ul>
+          <div className={this.props.css['main-header']}>
+            <Link to="/users">Users</Link>
+
+          </div>
           {this.props.children}
-        </div>
+          </div>
+
+
     )
   }
 }

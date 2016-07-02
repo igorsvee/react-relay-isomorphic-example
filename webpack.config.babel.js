@@ -2,7 +2,9 @@ var babelPlugin = require("./babelRelayPlugin");
 var path = require('path');
 var webpack = require('webpack');
 var HtmlwebpackPlugin = require('html-webpack-plugin');
-
+var precss = require('precss');
+var autoprefixer = require('autoprefixer');
+var postcssImport = require('postcss-import');
 module.exports = {
   entry: "./js/app.js",
   output: {

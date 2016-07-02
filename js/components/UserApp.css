@@ -1,0 +1,18 @@
+.main-header {
+    background-color: green;
+    font-family: Arial;
+    font-size: 1rem;
+    min-height: 2.75rem;
+    display: flex;
+    flex-direction: column;
+    /*align-items: center;*/
+    padding: 0 1rem;
+
+    & a {
+    color: #ebebeb;
+    text-decoration: none;
+    /*margin-bottom: 1rem;*/
+    margin-top: 1rem;
+}
+}
+

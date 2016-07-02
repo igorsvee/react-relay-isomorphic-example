@@ -9,7 +9,6 @@ import routes from './routes';
 import useRelay from 'react-router-relay';
 
 import createHashHistory from 'history/lib/createHashHistory';
-
 Relay.injectNetworkLayer(
     new Relay.DefaultNetworkLayer('http://localhost:3000/graphql', {
       credentials: 'same-origin',

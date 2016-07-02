@@ -38,7 +38,6 @@ class User extends React.Component {
 
   handleDeleteClick(id) {
     return () => {
-      console.log("deleting user #" + id)
 
       const deleteMutation = new DeleteUserMutation(
           {
@@ -47,10 +46,13 @@ class User extends React.Component {
           }
       );
 
-      commitUpdate(Relay.Store, deleteMutation)
-          .then((resp)=> this.props.afterDelete())
-          .catch((transaction) => this._setDeleteErrorIfNotSet())
 
+      const setErrorDeletionState = this._getStateThunkIfTruthy(this.state.deletionFailed === false, {deletionFailed: true});
+      const setSuccessfulDeletionState = this._getStateThunkIfTruthy(this.state.deletionFailed === true, {deletionFailed: false});
+
+      commitUpdate(Relay.Store, deleteMutation)
+          .then(setSuccessfulDeletionState)
+          .catch(setErrorDeletionState)
 
     }
   }
@@ -65,29 +67,29 @@ class User extends React.Component {
           }
       );
 
+      const setErrorActivationState = this._getStateThunkIfTruthy(this.state.activationFailed === false, {activationFailed: true});
+      const setSuccessfulActivationState = this._getStateThunkIfTruthy(this.state.activationFailed === true, {activationFailed: false});
       commitUpdate(Relay.Store, activationMutation)
-          .then((resp)=> {
-            if (this.state.activationFailed) {
-              this.setState({activationFailed: false})
-            }
-          })
-          .catch((transaction) =>this._setActivationErrorIfNotSet())
+          .then(setSuccessfulActivationState)
+          .catch(setErrorActivationState)
 
     }
 
   }
 
-  _setDeleteErrorIfNotSet() {
-    if (!this.state.deletionFailed) {
-      this.setState({deletionFailed: true})
+  _getStateThunkIfTruthy(cond, state) {
+    const thisFunc = this._getStateThunkIfTruthy;
+    if (arguments.length < thisFunc.length) {
+      return thisFunc.bind(...arguments)
+    } else {
+      return () => {
+        if (cond) {
+          this.setState({...state})
+        }
+      }
     }
   }
 
-  _setActivationErrorIfNotSet() {
-    if (!this.state.activationFailed) {
-      this.setState({activationFailed: true})
-    }
-  }
 
   render() {
     const {user, relay} = this.props;
@@ -102,7 +104,7 @@ class User extends React.Component {
 
     const mongoId = fromGlobalId(relayUserId).id;
 
-    return(
+    return (
         <tr style={styles} key={relayUserId}>
           <td>mongoId - {mongoId}, relayId - {relayUserId}</td>
           <td>{currentUsername}</td>
@@ -122,7 +124,6 @@ class User extends React.Component {
             {this.state.activationFailed && 'Activation Failed'}
             {this.state.deletionFailed && 'Deletion Failed'}
         </tr>)
-
 
 
   }

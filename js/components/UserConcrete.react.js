@@ -41,7 +41,7 @@ class UserConcrete extends React.Component {
       //  1st render with injected router props
       this.updateUserStateFromProps(nextProps)
       this.componentWillReceiveProps = function (nextProps) {
-        if (this.props.store.userConnectionPaginated != nextProps.store.userConnectionPaginated) {
+        if (this.props.store.userConnection != nextProps.store.userConnection) {
           console.log("user has changed ")
           this.updateUserStateFromProps(nextProps)
         }
@@ -63,7 +63,7 @@ class UserConcrete extends React.Component {
   }
 
   propsContainUser(props = this.props) {
-    return props.store.userConnectionPaginated.edgesPaginated.length != 0
+    return props.store.userConnection.edges.length != 0
   }
 
   getUserContent(user) {
@@ -130,7 +130,7 @@ class UserConcrete extends React.Component {
   }
 
   getUserFromProps(props = this.props) {
-    return props.store.userConnectionPaginated.edgesPaginated[0].node;
+    return props.store.userConnection.edges[0].node;
   }
 
   handleSaveChanges() {
@@ -239,8 +239,8 @@ UserConcrete = Relay.createContainer(UserConcrete, {
       return Relay.QL `
       fragment ff on Store {
              id,
-            userConnectionPaginated(id: $userId) {
-                edgesPaginated{
+           userConnection: userConnectionPaginated(id: $userId) {
+               edges: edgesPaginated{
                   node {
     username,
     id,

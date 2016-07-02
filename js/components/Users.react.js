@@ -36,7 +36,7 @@ class Users extends React.Component {
       </tr>
     }
 
-    return this.props.store.userConnectionPaginated.edgesPaginated.map((edge, ind) => {
+    return this.props.store.userConnection.edges.map((edge, ind) => {
       if (!edge.node.__dataID__) {// newly create node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
@@ -48,15 +48,15 @@ class Users extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps this.props.store.userConnectionPaginated.edgesPaginated  %O next %O", this.props.store.userConnectionPaginated.edgesPaginated, nextProps.store.userConnectionPaginated.edgesPaginated)
+    console.log("componentWillReceiveProps this.props.store.userConnection.edges  %O next %O", this.props.store.userConnection.edges, nextProps.store.userConnection.edges)
   }
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
     if (this.hasUsers()) {
-      const currentEdges = this.props.store.userConnectionPaginated.edgesPaginated;
+      const currentEdges = this.props.store.userConnection.edges;
       const currentLastEdge = currentEdges[currentEdges.length - 1];
-      const nextEdges = nextProps.store.userConnectionPaginated.edgesPaginated;
+      const nextEdges = nextProps.store.userConnection.edges;
 
       if (currentLastEdge.optimistic && currentEdges.length > nextEdges.length) {
         console.log("NOT Rerendering Users")
@@ -122,7 +122,7 @@ class Users extends React.Component {
   }
 
   hasUsers() {
-    return this.props.store.userConnectionPaginated.edgesPaginated.length != 0;
+    return this.props.store.userConnection.edges.length != 0;
   }
 
   getBottomControls() {
@@ -130,7 +130,7 @@ class Users extends React.Component {
       return null;
     }
 
-    const {hasNextPage, hasPreviousPage} = this.props.store.userConnectionPaginated.pageInfoPaginated;
+    const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfo;
 
     return (
         <tr>
@@ -238,11 +238,11 @@ Users = Relay.createContainer(Users, {
       return Relay.QL `
       fragment on Store {
          id
-         userConnectionPaginated(page: $page, limit:$limit){
-            pageInfoPaginated{
+       userConnection: userConnectionPaginated(page: $page, limit:$limit){
+           pageInfo: pageInfoPaginated{
               hasNextPage,hasPreviousPage
             },
-            edgesPaginated{
+           edges: edgesPaginated{
                  node{
                    ${User.getFragment('user')}
                  } 
