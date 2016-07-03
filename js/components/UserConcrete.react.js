@@ -2,13 +2,10 @@ import React from "react";
 import linkState from 'react-link-state';
 import Relay from 'react-relay'
 import UpdateUserMutation from '../mutations/UpdateUserMutation';
-import  {
 
-    fromGlobalId,
-
-} from 'graphql-relay'
 import autobind from 'autobind-decorator'
-import {commitUpdate} from '../utils/RelayUtils'
+import {commitUpdate, toMongoId} from '../utils/RelayUtils'
+import R from'ramda';
 @autobind
 class UserConcrete extends React.Component {
 
@@ -32,7 +29,7 @@ class UserConcrete extends React.Component {
   componentWillMount() {
     //  injected from react-router
     if (this.propsContainUser()) {
-      this.updateUserStateFromProps()
+      this.updateUserStateFromProps(this.props)
     }
   }
 
@@ -56,11 +53,7 @@ class UserConcrete extends React.Component {
     return this.state.username != user.username || this.state.address != user.address
   }
 
-  turnOnEditMode() {
-    this.setState({
-      editMode: true
-    })
-  }
+
 
   propsContainUser(props = this.props) {
     return props.store.userConnection.edges.length != 0
@@ -68,7 +61,7 @@ class UserConcrete extends React.Component {
 
   getUserContent(user) {
     const idCell = (    <td>
-      {fromGlobalId(user.id).id}
+      {toMongoId(user.id)}
     </td>);
 
     if (this.state.editMode) {
@@ -108,7 +101,7 @@ class UserConcrete extends React.Component {
             <td>
               { getButton({
                 title: 'Cancel Changes',
-                clickHandler: this.handleCancelChanges
+                clickHandler: this.updateUserStateFromProps.bind(this, this.props)
               })}
 
             </td>
@@ -175,22 +168,21 @@ class UserConcrete extends React.Component {
     ;
   }
 
-  turnOffEditMode() {
-    this.setState({editMode: false});
+  turnOnEditMode = this._setStateAndCb.bind(this, undefined, {editMode: true});
+  turnOffEditMode = this._setStateAndCb.bind(this, undefined, {editMode: false});
+
+  _setStateAndCb(cb, state) {
+    const thisFunc = this._setStateAndCb;
+    if (arguments.length < this._setStateAndCb.length) {
+      return thisFunc.bind(this, ...arguments)
+    } else {
+      this.setState({...state}, cb)
+    }
   }
 
-  updateUserStateFromProps(props = this.props, cb) {
-    const {username, address} = this.getUserFromProps(props);
+  setStateAndTurnOffEditMode = this._setStateAndCb(this.turnOffEditMode);
 
-    this.setState({
-      username,
-      address
-    }, cb)
-  }
-
-  handleCancelChanges() {
-    this.updateUserStateFromProps(this.props, this.turnOffEditMode);
-  }
+  updateUserStateFromProps = R.compose(this.setStateAndTurnOffEditMode, R.pick(['username', 'address']), this.getUserFromProps);
 
   render() {
     if (!this.propsContainUser()) {
@@ -239,7 +231,6 @@ UserConcrete = Relay.createContainer(UserConcrete, {
 
   fragments: {
 
-    // console
 // # This fragment only applies to objects of type 'Store'.
     store: (obj) => {
       console.log("obj %O", obj)

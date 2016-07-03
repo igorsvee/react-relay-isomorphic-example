@@ -8,7 +8,6 @@ import User from './User.react'
 import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
-import {applyUpdate} from '../utils/RelayUtils'
 @autobind
 class Users extends React.Component {
 
@@ -37,7 +36,7 @@ class Users extends React.Component {
     }
 
     return this.props.store.userConnection.edges.map((edge, ind) => {
-      if (!edge.node.__dataID__) {// newly create node by optimistic mutation would not have this property
+      if (!edge.node.__dataID__) {// newly created node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
         return <User store={this.props.store} afterDelete={this.afterDelete}
@@ -107,16 +106,14 @@ class Users extends React.Component {
     this.props.relay.setVariables({limit: newLimit})
   }
 
+  setRelayVariablesAndProcessReadyState = this._setRelayVariablesAndCb(this._processReadyState);
 
   handleNextPage() {
-    this._setRelayVariablesAndCb({page: this.props.relay.variables.page + 1}, this._processReadyState)
+    this.setRelayVariablesAndProcessReadyState({page: this.props.relay.variables.page + 1})
   }
 
-
-
-
   handlePrevPage() {
-    this._setRelayVariablesAndCb({page: this.props.relay.variables.page - 1}, this._processReadyState)
+    this.setRelayVariablesAndProcessReadyState({page: this.props.relay.variables.page - 1})
   }
 
   hasUsers() {
@@ -142,8 +139,14 @@ class Users extends React.Component {
     )
   }
 
-  _setRelayVariablesAndCb(variables, cb) {
-    this.props.relay.setVariables({...variables}, cb)
+  _setRelayVariablesAndCb(cb, variables) {
+    const currentFunction = this._setRelayVariablesAndCb;
+    if (arguments.length < currentFunction.length) {
+      return currentFunction.bind(this, ...arguments)
+    } else {
+      this.props.relay.setVariables({...variables}, cb)
+    }
+
   }
 
   _processReadyState(readyState) {

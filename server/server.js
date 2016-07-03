@@ -39,7 +39,7 @@ app.use(cors());
     fs.writeFile('./data/schema.json', JSON.stringify(json, null, 2), err => {
       if (err) throw err;
 
-      console.log("JSON schema created 1")
+      console.log("JSON schema created ")
     })
   } catch (e) {
     console.log(e)

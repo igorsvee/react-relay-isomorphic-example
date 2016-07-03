@@ -1,12 +1,8 @@
 import React from "react";
 import Relay from 'react-relay'
-import  {
 
-    fromGlobalId,
 
-} from 'graphql-relay'
-
-import {commitUpdate} from '../utils/RelayUtils'
+import {commitUpdate,toMongoId} from '../utils/RelayUtils'
 
 import DeleteUserMutation from '../mutations/DeleteUserMutation';
 import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutation';
@@ -84,10 +80,10 @@ class User extends React.Component {
 
     let styles = {};
     if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
-      styles = {display: 'none'};  // hide instead of returning null so the component doesn't get unmounted and the state is kept
+      styles = {display: 'none'};  // hide instead of returning null so the component doesn't get unmounted and the state is retained
     }
 
-    const mongoId = fromGlobalId(relayUserId).id;
+    const mongoId = toMongoId(relayUserId);
     const getButton = ({title, clickHandler}) => <button onClick={clickHandler}>{title}</button>
 
     return (
