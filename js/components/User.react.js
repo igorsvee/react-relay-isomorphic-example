@@ -30,13 +30,13 @@ class User extends React.Component {
     }
   }
 
-  handleDetailsClick(id) {
+  handleDetailsClicked(id) {
     return () => {
       this.context.router.push("/users/" + id);
     }
   }
 
-  handleDeleteClick(id) {
+  handleDeleteClicked(id) {
     return () => {
 
       const deleteMutation = new DeleteUserMutation(
@@ -47,31 +47,15 @@ class User extends React.Component {
       );
 
 
-      const setErrorDeletionState = this._setStateIfTruthy(this.state.deletionFailed === false, {deletionFailed: true});
-      const setSuccessfulDeletionState = this._setStateIfTruthy(this.state.deletionFailed === true, {deletionFailed: false});
-
       commitUpdate(Relay.Store, deleteMutation)
-          .then(setSuccessfulDeletionState)
-          .catch(setErrorDeletionState)
+          .then(()=>this.setState({deletionFailed: false}))
+          .catch(()=>this.setState({deletionFailed: true}))
 
     }
   }
 
   activateUser = this._setUserActivation.bind(this, true);
   deactivateUser = this._setUserActivation.bind(this, false);
-
-  _setStateIfTruthy(cond, state) {
-    const thisFunc = this._setStateIfTruthy;
-    if (arguments.length < thisFunc.length) {
-      return thisFunc.bind(...arguments)
-    } else {
-      return () => {
-        if (cond) {
-          this.setState({...state})
-        }
-      }
-    }
-  }
 
   _setUserActivation(activated, userId) {
     return () => {
@@ -83,11 +67,9 @@ class User extends React.Component {
           }
       );
 
-      const setErrorActivationState = this._setStateIfTruthy(this.state.activationFailed === false, {activationFailed: true});
-      const setSuccessfulActivationState = this._setStateIfTruthy(this.state.activationFailed === true, {activationFailed: false});
       commitUpdate(Relay.Store, activationMutation)
-          .then(setSuccessfulActivationState)
-          .catch(setErrorActivationState)
+          .then(()=>this.setState({activationFailed: false}))
+          .catch(()=>this.setState({activationFailed: true}))
 
     }
 
@@ -106,7 +88,7 @@ class User extends React.Component {
     }
 
     const mongoId = fromGlobalId(relayUserId).id;
-    const getButton = (title, clickHandler) => <button onClick={clickHandler}>{title}</button>
+    const getButton = ({title, clickHandler}) => <button onClick={clickHandler}>{title}</button>
 
     return (
         <tr style={styles} key={relayUserId}>
@@ -114,13 +96,34 @@ class User extends React.Component {
           <td>{currentUsername}</td>
           <td>{user.address}</td>
           <td>         {user.activated ? 'YES' : 'NO'}
-                       {user.activated ? getButton('Deactivate', this.deactivateUser(relayUserId)) : getButton('Activate', this.activateUser(relayUserId)) }
+                       {user.activated ?
+                           getButton({
+                             title: 'Deactivate',
+                             clickHandler: this.deactivateUser(relayUserId)
+                           }) :
+                           getButton({
+                             title: 'Activate',
+                             clickHandler: this.activateUser(relayUserId)
+                           })}
           </td>
           <td>
-            {getButton('Details', this.handleDetailsClick(relayUserId))}
+            {
+              getButton({
+                title: 'Details',
+                clickHandler: this.handleDetailsClicked(relayUserId)
+              })
+            }
+
+
           </td>
           <td>
-            {getButton('X', this.handleDeleteClick(relayUserId))}
+            {
+              getButton({
+                title: 'X',
+                clickHandler: this.handleDeleteClicked(relayUserId)
+              })
+            }
+
           </td>
             {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
             {this.state.activationFailed && 'Activation Failed'}
@@ -134,7 +137,6 @@ class User extends React.Component {
 // fragment on User type!!!
 User = Relay.createContainer(User, {
   fragments: {
-    //  needs 3 fields from the User type
     user: () => Relay.QL`
      fragment UserInfo on User{
        activated,

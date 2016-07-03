@@ -97,6 +97,8 @@ class UserConcrete extends React.Component {
   }
 
   getUserControls() {
+    const getButton = ({title, clickHandler}) => <button onClick={clickHandler}>{title}</button>;
+
     if (this.state.editMode) {
       return (
           <tr>
@@ -104,10 +106,18 @@ class UserConcrete extends React.Component {
               &nbsp;
             </td>
             <td>
-              <button onClick={this.handleCancelChanges}>Cancel Changes</button>
+              { getButton({
+                title: 'Cancel Changes',
+                clickHandler: this.handleCancelChanges
+              })}
+
             </td>
             <td>
-              <button onClick={this.handleSaveChanges}>Update DB</button>
+              { getButton({
+                title: 'Update DB',
+                clickHandler: this.handleSaveChanges
+              })}
+
             </td>
 
           </tr>
@@ -116,7 +126,11 @@ class UserConcrete extends React.Component {
       return (
           <tr>
             <td>
-              <button onClick={this.turnOnEditMode}>Edit</button>
+              { getButton({
+                title: 'Edit',
+                clickHandler: this.turnOnEditMode
+              })}
+
             </td>
           </tr>
       )
@@ -155,16 +169,10 @@ class UserConcrete extends React.Component {
 
     commitUpdate(Relay.Store, updateMutation)
         .then((resp)=>this.setState({updateFailed: false}))
-        .catch(this._setUpdateErrorIfNotSet)
+        .catch(()=> this.setState({updateFailed: true}))
         .finally(this.turnOffEditMode)
 
     ;
-  }
-
-  _setUpdateErrorIfNotSet(transaction) {
-    if (!this.state.updateFailed) {
-      this.setState({updateFailed: true})
-    }
   }
 
   turnOffEditMode() {
@@ -217,7 +225,7 @@ class UserConcrete extends React.Component {
 
           {relay.hasOptimisticUpdate(store) && <h2>Updating...</h2>}
           {this.userWasEdited() && <h3>Has unsaved changes</h3>}
-          {this.state.updateFailed && 'Update failed'}
+          {this.state.updateFailed && <strong>Update failed</strong>}
         </div>
     )
   }
