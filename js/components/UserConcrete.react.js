@@ -32,8 +32,6 @@ class UserConcrete extends React.Component {
       }, {}),
     };
 
-    this._setStateAndCb = this._setStateAndCb.curry();
-    // this._setStateAndCbCurried = this._setStateAndCbCurried.curry();
   }
 
   //  static properties don't work with ramda pick
@@ -158,7 +156,6 @@ class UserConcrete extends React.Component {
     const fields = this.editableUserFields.reduce((prev, fieldName) => {
       prev[fieldName] = fieldNotChanged(fieldName) ? userProps[fieldName] : this.state.user[fieldName];
       return prev;
-
     }, {});
 
     const updateMutation = new UpdateUserMutation(
@@ -177,30 +174,23 @@ class UserConcrete extends React.Component {
     ;
   }
 
-  turnOnEditMode = this._setEditMode(true);
-  turnOffEditMode = this._setEditMode(false);
+  turnOnEditMode = this._toggleEditMode.curry(true);
+  turnOffEditMode = this._toggleEditMode.curry(false);
 
-  _setEditMode(flag) {
-    return this._setStateAndCb.curry(undefined, {editMode: flag});
-  }
-
-  _setStateAndCb(cb, state) {
-    this.setState({...state}, cb)
+  _toggleEditMode(editMode) {
+    this.setState({editMode})
   }
 
   setUserStateFromProps(props) {
-    const setStateAndTurnOffEditMode = this._setStateAndCb.curry(this.turnOffEditMode);
-
-    const buildUserState = (obj)=> {
-      return {
+    const setUserState = (props) => {
+      this.setState({
         user: {
-          ...obj
+          ...props
         }
-      }
+      })
     };
 
-
-    return R.compose(setStateAndTurnOffEditMode, buildUserState, R.pick(this.editableUserFields), this.getFilteredUserFromProps)(props)
+    return R.compose(this.turnOffEditMode, setUserState, R.pick(this.editableUserFields), this.getFilteredUserFromProps)(props)
   } ;
 
   render() {
