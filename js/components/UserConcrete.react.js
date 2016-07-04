@@ -6,6 +6,7 @@ import UpdateUserMutation from '../mutations/UpdateUserMutation';
 import autobind from 'autobind-decorator'
 import {commitUpdate, toMongoId} from '../utils/RelayUtils'
 import R from'ramda';
+
 @autobind
 class UserConcrete extends React.Component {
 
@@ -18,29 +19,41 @@ class UserConcrete extends React.Component {
 
     this.state = {
       editMode: false,
-      username: '',
-      address: '',
-      updateFailed: false
-    };
+      updateFailed: false,
+      /*
+       user: {
+       propName1: '',
+       propName2: '',
+       },
+       */
+      user: this.editablePropNames.reduce((prev, propName)=> {
+        prev[propName] = '';
+        return prev
+      }, {}),
 
+    };
   }
 
-  //todo not using constructor intentionally
+  //  static properties don't work with ramda pick
+  editablePropNames = ['username', 'address'];
+  ignoredFields = ['__dataID__', '__status__', '__mutationStatus__'];
+
+  //not using constructor intentionally
   componentWillMount() {
     //  injected from react-router
     if (this.propsContainUser()) {
-      this.updateUserStateFromProps(this.props)
+      this.setUserStateFromProps(this.props)
     }
   }
 
   componentWillReceiveProps(nextProps) {
     if (this.propsContainUser(nextProps)) {
       //  1st render with injected router props
-      this.updateUserStateFromProps(nextProps)
+      this.setUserStateFromProps(nextProps);
       this.componentWillReceiveProps = function (nextProps) {
         if (this.props.store.userConnection != nextProps.store.userConnection) {
-          console.log("user has changed ")
-          this.updateUserStateFromProps(nextProps)
+          console.log("user has changed");
+          this.setUserStateFromProps(nextProps)
         }
       }
 
@@ -48,11 +61,12 @@ class UserConcrete extends React.Component {
 
   }
 
-  userWasEdited() {
-    const user = this.getUserFromProps();
-    return this.state.username != user.username || this.state.address != user.address
-  }
 
+  wasEdited() {
+    const user = this.getUserFromProps();
+
+    return this.editablePropNames.some((propName) => this.state.user[propName] != user[propName])
+  }
 
 
   propsContainUser(props = this.props) {
@@ -60,31 +74,29 @@ class UserConcrete extends React.Component {
   }
 
   getUserContent(user) {
-    const idCell = (    <td>
-      {toMongoId(user.id)}
-    </td>);
 
-    if (this.state.editMode) {
-      return (<tr>
-        {idCell}
-        <td>
-          <input valueLink={linkState(this, 'username')} ref="username" type="text"/>
-        </td>
-        <td>
-          <input valueLink={linkState(this, 'address')} ref="address" type="text"/>
-        </td>
-      </tr>)
-    } else {
-      return (<tr>
-        {idCell}
-        <td>
-          {user.username}
-        </td>
-        <td>
-          {user.address}
-        </td>
-      </tr>)
-    }
+    const getInputField = (fieldName) => {
+      return <td><input valueLink={linkState(this, `user.${fieldName}`)} ref={fieldName} type="text"/></td>
+    };
+
+    const getNormalField = (fieldName) => {
+      return <td>
+        {String(user[fieldName])}
+      </td>
+    };
+
+    return ( <tr>
+          {Object.keys(user).filter((fieldName)=> {
+            return !this.ignoredFields.includes(fieldName)
+          }).map((fieldName) => {
+            if (this.state.editMode && this.editablePropNames.includes(fieldName)) {//  is editable and edit mode is turned on
+              return getInputField(fieldName)
+            } else {
+              return getNormalField(fieldName);
+            }
+          })}
+        </tr>
+    );
 
 
   }
@@ -92,71 +104,61 @@ class UserConcrete extends React.Component {
   getUserControls() {
     const getButton = ({title, clickHandler}) => <button onClick={clickHandler}>{title}</button>;
 
-    if (this.state.editMode) {
-      return (
-          <tr>
-            <td>
-              &nbsp;
-            </td>
-            <td>
-              { getButton({
-                title: 'Cancel Changes',
-                clickHandler: this.updateUserStateFromProps.bind(this, this.props)
-              })}
+    return (
+        <div>
+          {
+            this.state.editMode ?
+                <p>
+                  { getButton({
+                    title: 'Cancel Changes',
+                    clickHandler: this.setUserStateFromProps.bind(this, this.props)
+                  })}
 
-            </td>
-            <td>
-              { getButton({
-                title: 'Update DB',
-                clickHandler: this.handleSaveChanges
-              })}
+                  { getButton({
+                    title: 'Update DB',
+                    clickHandler: this.handleSaveChanges
+                  })}
+                </p>
+                :
+                getButton({
+                  title: 'Edit',
+                  clickHandler: this.turnOnEditMode
+                })
 
-            </td>
-
-          </tr>
-      )
-    } else {
-      return (
-          <tr>
-            <td>
-              { getButton({
-                title: 'Edit',
-                clickHandler: this.turnOnEditMode
-              })}
-
-            </td>
-          </tr>
-      )
-    }
+          }
+        </div>
+    );
 
 
   }
 
-  propertyChanged(propName) {
-    return this.state[propName] !== this.getUserFromProps()[propName]
-  }
 
   getUserFromProps(props = this.props) {
+    // console.warn("props. store.userConnection.edges[0].node %O",props.store.userConnection.edges[0].node)
     return props.store.userConnection.edges[0].node;
   }
 
   handleSaveChanges() {
-    const userStore = this.getUserFromProps();
+    const fieldNotChanged = (propName) => R.eqProps(propName, this.state.user, this.getUserFromProps(this.props));
+
+    const userProps = this.getUserFromProps();
 
     //  won't change, using it
-    const id = userStore.id;
+    const id = userProps.id;
 
-    const newUsername = this.propertyChanged('username') ? this.state.username : userStore.username;
-    const newAddress = this.propertyChanged('address') ? this.state.address : userStore.address;
+    // if user has edited the prop then use edited version of it, otherwise use an old value for the prop
+    const extractedProps = {};
+    this.editablePropNames.reduce((prev, fieldName) => {
+      prev[fieldName] = fieldNotChanged(fieldName) ? userProps[fieldName] : this.state.user[fieldName];
+      return prev;
 
-    console.log("Updated user %O...", {newUsername, newAddress, id});
+    }, extractedProps);
 
     const updateMutation = new UpdateUserMutation(
         {
-          username: newUsername,
           id,
-          address: newAddress
-          , storeId: this.props.store.id
+          storeId: this.props.store.id,
+          ...extractedProps
         }
     );
 
@@ -180,9 +182,20 @@ class UserConcrete extends React.Component {
     }
   }
 
-  setStateAndTurnOffEditMode = this._setStateAndCb(this.turnOffEditMode);
+  setUserStateFromProps(props) {
+    const setStateAndTurnOffEditMode = this._setStateAndCb(this.turnOffEditMode);
 
-  updateUserStateFromProps = R.compose(this.setStateAndTurnOffEditMode, R.pick(['username', 'address']), this.getUserFromProps);
+    const buildUserState = (obj)=> {
+      return {
+        user: {
+          ...obj
+        }
+      }
+    };
+
+
+    return R.compose(setStateAndTurnOffEditMode, buildUserState, R.pick(this.editablePropNames), this.getUserFromProps)(props)
+  } ;
 
   render() {
     if (!this.propsContainUser()) {
@@ -198,25 +211,27 @@ class UserConcrete extends React.Component {
           <h1>Concrete page for {user.username}:</h1>
           <table>
             <tr>
-              <td>
-                id
-              </td>
-              <td>
-                username
-              </td>
-              <td>
-                address
-              </td>
+              {Object.keys(user).filter((fieldName) => {
+                return !this.ignoredFields.includes(fieldName)
+              })
+                  .map((fieldName) => {
+
+                    return <td>
+                      {fieldName}
+                    </td>
+                  })
+              }
             </tr>
 
             {this.getUserContent(user)}
 
-            {this.getUserControls()}
 
           </table>
 
+          {this.getUserControls()}
+
           {relay.hasOptimisticUpdate(store) && <h2>Updating...</h2>}
-          {this.userWasEdited() && <h3>Has unsaved changes</h3>}
+          {this.wasEdited() && <h3>Has unsaved changes</h3>}
           {this.state.updateFailed && <strong>Update failed</strong>}
         </div>
     )

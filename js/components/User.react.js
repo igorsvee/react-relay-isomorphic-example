@@ -2,7 +2,7 @@ import React from "react";
 import Relay from 'react-relay'
 
 
-import {commitUpdate,toMongoId} from '../utils/RelayUtils'
+import {commitUpdate, toMongoId} from '../utils/RelayUtils'
 
 import DeleteUserMutation from '../mutations/DeleteUserMutation';
 import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutation';
@@ -50,23 +50,27 @@ class User extends React.Component {
     }
   }
 
-  activateUser = this._setUserActivation.bind(this, true);
-  deactivateUser = this._setUserActivation.bind(this, false);
+  activateUser = this._setUserActivation(true);
+  deactivateUser = this._setUserActivation(false);
 
   _setUserActivation(activated, userId) {
-    return () => {
-      const activationMutation = new ToggleUserActivatedMutation(
-          {
-            userId,
-            activated
-            , storeId: this.props.store.id
-          }
-      );
+    if (arguments.length < this._setUserActivation.length) {
+      return this._setUserActivation.bind(this, ...arguments)
+    } else {
+      return () => {
+        const activationMutation = new ToggleUserActivatedMutation(
+            {
+              userId,
+              activated
+              , storeId: this.props.store.id
+            }
+        );
 
-      commitUpdate(Relay.Store, activationMutation)
-          .then(()=>this.setState({activationFailed: false}))
-          .catch(()=>this.setState({activationFailed: true}))
+        commitUpdate(Relay.Store, activationMutation)
+            .then(()=>this.setState({activationFailed: false}))
+            .catch(()=>this.setState({activationFailed: true}))
 
+      }
     }
 
   }
