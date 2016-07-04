@@ -50,29 +50,24 @@ class User extends React.Component {
     }
   }
 
-  activateUser = this._setUserActivation(true);
-  deactivateUser = this._setUserActivation(false);
+  activateUser = this._setUserActivation.curry(true);
+  deactivateUser = this._setUserActivation.curry(false);
 
   _setUserActivation(activated, userId) {
-    if (arguments.length < this._setUserActivation.length) {
-      return this._setUserActivation.bind(this, ...arguments)
-    } else {
-      return () => {
-        const activationMutation = new ToggleUserActivatedMutation(
-            {
-              userId,
-              activated
-              , storeId: this.props.store.id
-            }
-        );
+    return () => {
+      const activationMutation = new ToggleUserActivatedMutation(
+          {
+            userId,
+            activated
+            , storeId: this.props.store.id
+          }
+      );
 
-        commitUpdate(Relay.Store, activationMutation)
-            .then(()=>this.setState({activationFailed: false}))
-            .catch(()=>this.setState({activationFailed: true}))
+      commitUpdate(Relay.Store, activationMutation)
+          .then(()=>this.setState({activationFailed: false}))
+          .catch(()=>this.setState({activationFailed: true}))
 
-      }
     }
-
   }
 
 

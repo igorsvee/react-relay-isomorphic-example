@@ -30,8 +30,10 @@ class UserConcrete extends React.Component {
         prev[propName] = '';
         return prev
       }, {}),
-
     };
+
+    this._setStateAndCb = this._setStateAndCb.curry();
+    // this._setStateAndCbCurried = this._setStateAndCbCurried.curry();
   }
 
   //  static properties don't work with ramda pick
@@ -175,20 +177,19 @@ class UserConcrete extends React.Component {
     ;
   }
 
-  turnOnEditMode = this._setStateAndCb.bind(this, undefined, {editMode: true});
-  turnOffEditMode = this._setStateAndCb.bind(this, undefined, {editMode: false});
+  turnOnEditMode = this._setEditMode(true);
+  turnOffEditMode = this._setEditMode(false);
+
+  _setEditMode(flag) {
+    return this._setStateAndCb.curry(undefined, {editMode: flag});
+  }
 
   _setStateAndCb(cb, state) {
-    const thisFunc = this._setStateAndCb;
-    if (arguments.length < this._setStateAndCb.length) {
-      return thisFunc.bind(this, ...arguments)
-    } else {
-      this.setState({...state}, cb)
-    }
+    this.setState({...state}, cb)
   }
 
   setUserStateFromProps(props) {
-    const setStateAndTurnOffEditMode = this._setStateAndCb(this.turnOffEditMode);
+    const setStateAndTurnOffEditMode = this._setStateAndCb.curry(this.turnOffEditMode);
 
     const buildUserState = (obj)=> {
       return {

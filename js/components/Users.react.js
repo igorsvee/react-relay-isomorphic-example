@@ -106,7 +106,7 @@ class Users extends React.Component {
     this.props.relay.setVariables({limit: newLimit})
   }
 
-  setRelayVariablesAndProcessReadyState = this._setRelayVariablesAndCb(this._processReadyState);
+  setRelayVariablesAndProcessReadyState = this._setRelayVariablesAndCb.curry(this._processReadyState);
 
   handleNextPage() {
     this.setRelayVariablesAndProcessReadyState({page: this.props.relay.variables.page + 1})
@@ -139,14 +139,8 @@ class Users extends React.Component {
     )
   }
 
-  _setRelayVariablesAndCb(cb, variables) {
-    const currentFunction = this._setRelayVariablesAndCb;
-    if (arguments.length < currentFunction.length) {
-      return currentFunction.bind(this, ...arguments)
-    } else {
-      this.props.relay.setVariables({...variables}, cb)
-    }
-
+  _setRelayVariablesAndCb(cb, state) {
+    this.props.relay.setVariables({...state}, cb)
   }
 
   _processReadyState(readyState) {
