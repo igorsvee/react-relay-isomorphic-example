@@ -4,7 +4,7 @@ import Relay from 'react-relay'
 import UpdateUserMutation from '../mutations/UpdateUserMutation';
 
 import autobind from 'autobind-decorator'
-import {commitUpdate, toMongoId} from '../utils/RelayUtils'
+import {commitUpdate} from '../utils/RelayUtils'
 import R from'ramda';
 
 @autobind
@@ -26,7 +26,7 @@ class UserConcrete extends React.Component {
        propName2: '',
        },
        */
-      user: this.editablePropNames.reduce((prev, propName)=> {
+      user: this.editableUserFields.reduce((prev, propName)=> {
         prev[propName] = '';
         return prev
       }, {}),
@@ -35,12 +35,11 @@ class UserConcrete extends React.Component {
   }
 
   //  static properties don't work with ramda pick
-  editablePropNames = ['username', 'address'];
+  editableUserFields = ['username', 'address'];
   ignoredFields = ['__dataID__', '__status__', '__mutationStatus__'];
 
   //not using constructor intentionally
   componentWillMount() {
-    //  injected from react-router
     if (this.propsContainUser()) {
       this.setUserStateFromProps(this.props)
     }
@@ -63,9 +62,9 @@ class UserConcrete extends React.Component {
 
 
   wasEdited() {
-    const user = this.getUserFromProps();
+    const user = this.getFilteredUserFromProps();
 
-    return this.editablePropNames.some((propName) => this.state.user[propName] != user[propName])
+    return this.editableUserFields.some((fieldName) => this.state.user[fieldName] != user[fieldName])
   }
 
 
@@ -86,10 +85,8 @@ class UserConcrete extends React.Component {
     };
 
     return ( <tr>
-          {Object.keys(user).filter((fieldName)=> {
-            return !this.ignoredFields.includes(fieldName)
-          }).map((fieldName) => {
-            if (this.state.editMode && this.editablePropNames.includes(fieldName)) {//  is editable and edit mode is turned on
+          {Object.keys(user).map((fieldName) => {
+            if (this.state.editMode && this.editableUserFields.includes(fieldName)) {//  is editable and edit mode is turned on
               return getInputField(fieldName)
             } else {
               return getNormalField(fieldName);
@@ -132,33 +129,41 @@ class UserConcrete extends React.Component {
 
   }
 
+  getFilteredUserFromProps(props) {
+    const getUserFromProps = (props = this.props) => {
+      return props.store.userConnection.edges[0].node;
+    };
 
-  getUserFromProps(props = this.props) {
-    // console.warn("props. store.userConnection.edges[0].node %O",props.store.userConnection.edges[0].node)
-    return props.store.userConnection.edges[0].node;
+    const filterUser = (user) => {
+      const validKeys = Object.keys(user).filter((key) => {
+        return !this.ignoredFields.includes(key)
+      });
+      return R.pick(validKeys)(user)
+    };
+
+    return R.compose(filterUser, getUserFromProps)(props)
   }
 
   handleSaveChanges() {
-    const fieldNotChanged = (propName) => R.eqProps(propName, this.state.user, this.getUserFromProps(this.props));
+    const fieldNotChanged = (propName) => R.eqProps(propName, this.state.user, this.getFilteredUserFromProps(this.props));
 
-    const userProps = this.getUserFromProps();
+    const userProps = this.getFilteredUserFromProps();
 
     //  won't change, using it
     const id = userProps.id;
 
-    // if user has edited the prop then use edited version of it, otherwise use an old value for the prop
-    const extractedProps = {};
-    this.editablePropNames.reduce((prev, fieldName) => {
+    // if user has edited the field then use edited version, otherwise use an old value for the field
+    const fields = this.editableUserFields.reduce((prev, fieldName) => {
       prev[fieldName] = fieldNotChanged(fieldName) ? userProps[fieldName] : this.state.user[fieldName];
       return prev;
 
-    }, extractedProps);
+    }, {});
 
     const updateMutation = new UpdateUserMutation(
         {
           id,
           storeId: this.props.store.id,
-          ...extractedProps
+          ...fields
         }
     );
 
@@ -194,7 +199,7 @@ class UserConcrete extends React.Component {
     };
 
 
-    return R.compose(setStateAndTurnOffEditMode, buildUserState, R.pick(this.editablePropNames), this.getUserFromProps)(props)
+    return R.compose(setStateAndTurnOffEditMode, buildUserState, R.pick(this.editableUserFields), this.getFilteredUserFromProps)(props)
   } ;
 
   render() {
@@ -204,27 +209,17 @@ class UserConcrete extends React.Component {
 
     const {relay, store} = this.props;
 
-    const user = this.getUserFromProps();
+    const user = this.getFilteredUserFromProps();
 
     return (
         <div>
           <h1>Concrete page for {user.username}:</h1>
           <table>
             <tr>
-              {Object.keys(user).filter((fieldName) => {
-                return !this.ignoredFields.includes(fieldName)
-              })
-                  .map((fieldName) => {
-
-                    return <td>
-                      {fieldName}
-                    </td>
-                  })
-              }
+              {Object.keys(user).map((fieldName) => <td>{fieldName} </td>)}
             </tr>
 
             {this.getUserContent(user)}
-
 
           </table>
 
