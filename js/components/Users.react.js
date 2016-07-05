@@ -58,7 +58,7 @@ class Users extends React.Component {
       const nextEdges = nextProps.store.userConnection.edges;
 
       if (currentLastEdge.optimistic && currentEdges.length > nextEdges.length) {
-        console.log("NOT Rerendering Users")
+        console.log("NOT Rerendering Users");
         return false;
       }
     }
@@ -78,20 +78,20 @@ class Users extends React.Component {
       limit: this.props.relay.variables.limit,
     });
 
+    const setEmptyErrorMessage = this._setErrorMessage.curry(null);
 
-    const transaction = Relay.Store.applyUpdate(createUserMutation, {
-      onFailure: (transaction) => {
-        console.log("onFailure transaction %O", transaction)
-        this.setState({errorMessage: transaction.getError()})
-      }
-      , onSuccess: ()=>console.log("Created!")
-    });
-
-    this.setState({createTransaction: transaction});
-
+    const transaction = Relay.Store.applyUpdate(createUserMutation,
+        {
+          onFailure: transaction => this._setErrorMessage(transaction.getError())
+          , onSuccess: setEmptyErrorMessage
+        });
     transaction.commit();
 
-    this.clearInputFields();
+    this.setState({createTransaction: transaction}, this.clearInputFields);
+  }
+
+  _setErrorMessage(message) {
+    this.setState({errorMessage: message})
   }
 
 
@@ -149,8 +149,6 @@ class Users extends React.Component {
     }
   }
 
-
-  // ready{this.state.readyState && this.state.readyState.ready}, done  {this.state.readyState &&this.state.readyState.done} error{this.state.readyState &&this.state.readyState.error}
   render() {
     const {relay, store} = this.props;
     const {createTransaction} = this.state;

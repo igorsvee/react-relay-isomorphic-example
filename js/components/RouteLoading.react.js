@@ -7,6 +7,10 @@ class UserLoading extends React.Component {
     message: React.PropTypes.string.isRequired,
   };
 
+  shouldComponentUpdate(nextProps) {
+    return this.props.message != nextProps.message;
+  }
+
   render() {
     const message = this.props.message;
 

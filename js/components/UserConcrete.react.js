@@ -7,6 +7,9 @@ import autobind from 'autobind-decorator'
 import {commitUpdate} from '../utils/RelayUtils'
 import R from'ramda';
 
+import cancelPromises from '../hocs/promisesCancellator';
+
+@cancelPromises
 @autobind
 class UserConcrete extends React.Component {
 
@@ -34,7 +37,7 @@ class UserConcrete extends React.Component {
 
   }
 
-  //  static properties don't work with ramda pick
+  //  static properties don't work with ramda's pick
   editableUserFields = ['username', 'address'];
   ignoredFields = ['__dataID__', '__status__', '__mutationStatus__'];
 
@@ -166,9 +169,18 @@ class UserConcrete extends React.Component {
         }
     );
 
-    commitUpdate(Relay.Store, updateMutation)
-        .then((resp)=>this.setState({updateFailed: false}))
-        .catch(()=> this.setState({updateFailed: true}))
+    const updateFailed = this._toggleUpdateFailed.curry(true);
+    const updateSuccessful = this._toggleUpdateFailed.curry(false);
+
+
+    const updatePromise = commitUpdate(Relay.Store, updateMutation);
+
+    this.props.cancelOnUnmount(updatePromise);
+
+    updatePromise
+        .promise
+        .then(updateSuccessful)
+        .catch(updateFailed)
         .finally(this.turnOffEditMode)
 
     ;
@@ -179,6 +191,10 @@ class UserConcrete extends React.Component {
 
   _toggleEditMode(editMode) {
     this.setState({editMode})
+  }
+
+  _toggleUpdateFailed(updateFailed) {
+    this.setState({updateFailed})
   }
 
   setUserStateFromProps(props) {
@@ -258,6 +274,6 @@ UserConcrete = Relay.createContainer(UserConcrete, {
 
 
   }
-})
+});
 
 export default UserConcrete;

@@ -6,6 +6,10 @@ import {commitUpdate, toMongoId} from '../utils/RelayUtils'
 
 import DeleteUserMutation from '../mutations/DeleteUserMutation';
 import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutation';
+
+import cancelPromises from '../hocs/promisesCancellator';
+
+@cancelPromises
 class User extends React.Component {
 
   static contextTypes = {
@@ -32,6 +36,8 @@ class User extends React.Component {
     }
   }
 
+
+
   handleDeleteClicked(id) {
     return () => {
 
@@ -43,9 +49,16 @@ class User extends React.Component {
       );
 
 
-      commitUpdate(Relay.Store, deleteMutation)
+      const deletePromise = commitUpdate(Relay.Store, deleteMutation);
+      this.props.cancelOnUnmount(deletePromise);
+
+      deletePromise.promise
           .then(()=>this.setState({deletionFailed: false}))
-          .catch(()=>this.setState({deletionFailed: true}))
+          .catch((err)=> {
+            if (!err.isCanceled) {
+              this.setState({deletionFailed: true})
+            }
+          })
 
     }
   }
@@ -63,9 +76,18 @@ class User extends React.Component {
           }
       );
 
-      commitUpdate(Relay.Store, activationMutation)
+      const updatePromise = commitUpdate(Relay.Store, activationMutation)
+      this.props.cancelOnUnmount(updatePromise);
+      // this.cancelablePromises.push(updatePromise);
+
+      updatePromise
+          .promise
           .then(()=>this.setState({activationFailed: false}))
-          .catch(()=>this.setState({activationFailed: true}))
+          .catch((err)=> {
+            if (!err.isCanceled) {
+              this.setState({activationFailed: true})
+            }
+          })
 
     }
   }
