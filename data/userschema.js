@@ -32,13 +32,15 @@ import  {
 var ObjectID = require('mongodb').ObjectID;
 import {toMongoId} from '../server/serverUtils'
 
+import {genHash} from './dbUtils'
+
 
 const UserSchema = (db) => {
   class Store {
   }
   const store = new Store();
 
-  const dbDao = database(db);
+  const dbManager = database(db);
 
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
@@ -51,7 +53,7 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await dbDao.getUserById(toMongoId(id));
+            const userDb = await dbManager.getUserById(toMongoId(id));
 
             const userEntity = new User(userDb);
 
@@ -60,7 +62,7 @@ const UserSchema = (db) => {
 
           case 'Product':
             console.log("in Product, id:" + id);
-            const productDB = await dbDao.getProductById(toMongoId(id));
+            const productDB = await dbManager.getProductById(toMongoId(id));
 
             const productEntity = new User(productDB);
 
@@ -243,24 +245,24 @@ const UserSchema = (db) => {
     outputFields: {
 
       newUserEdge: {
-      // userEdge: {
+        // userEdge: {
         type: userConnectionPaginated.edgeType,
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
         resolve: (obj) => {
-                     // console.log("obj %O",obj)
-          console.log("created %O",obj.ops[0])
+          // console.log("obj %O",obj)
+          console.log("created %O", obj.ops[0])
           return ({node: obj.ops[0]})
         }
 
-      } ,
+      },
       //   ,
-      newUserId:{
+      newUserId: {
         type: new GraphQLNonNull(GraphQLString),
         resolve: (obj) => {
-          console.log('newUserId '+obj.insertedId)
+          console.log('newUserId ' + obj.insertedId)
 
           const relayId = toGlobalId('User', obj.insertedId)
           console.log("relayId " + relayId)
@@ -277,13 +279,17 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: ({username, address, password}) => {
+    , mutateAndGetPayload: async({username, address, password}) => {
       console.log("inserting: %O", {username, address, password})
-      return db.collection("users").insertOne({username, address, password, activated: false}, {
-        safe: false,db: {forceServerObjectId: true}
+
+      const hash = await genHash(password);
+
+      return db.collection("users").insertOne({username, address, password: hash, activated: false}, {
+        safe: false, db: {forceServerObjectId: true}
       });
     }
   })
+
 
   let removeUserMutation = mutationWithClientMutationId({
     name: 'DeleteUser',
@@ -369,9 +375,10 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: ({id, username, address, password}) => {
+    , mutateAndGetPayload: async({id, username, address, password}) => {
       const realObjId = fromGlobalId(id).id;
-      console.log("id %s username %s address %s password %s ", id, username, address, password)
+      console.log("id %s username %s address %s password %s ", id, username, address, password
+      )
       const setObj = {
         $set: {}
       };
@@ -382,7 +389,7 @@ const UserSchema = (db) => {
         setObj.$set.address = address;
       }
       if (password) {
-        setObj.$set.password = password;
+        setObj.$set.password = await(genHash(password));
       }
 
 
