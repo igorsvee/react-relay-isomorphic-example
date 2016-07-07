@@ -8,9 +8,7 @@ Usage:
 -------
 
 ```console
-$ npm install
-$ npm webpack
-$ npm server
+$ npm start
 ```
 
 Then navigate to [http://localhost:3000](http://localhost:3000)
