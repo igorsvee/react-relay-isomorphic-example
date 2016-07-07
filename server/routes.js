@@ -1,6 +1,8 @@
 import express from 'express';
 import passport from 'passport';
 
+import { renderToString } from 'react-dom/server'
+import { match, RouterContext } from 'react-router'
 var router = express.Router();
 
 function ensureAuthenticated(req, res, next) {
@@ -47,6 +49,12 @@ router.post("/login",
     }
 
 );
+
+// router.get("/",function (req, res, next) {
+//     console.log("MAIN %O"+req)
+//   res.sendFile(path.join(__dirname + '/index.html'));
+// })
+
 
 router.post("/logout", function (req, res) {
   if (req.isAuthenticated()) {
