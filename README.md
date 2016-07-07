@@ -1,13 +1,21 @@
 # react-relay-app
-A simple crud app I've built in order to get familiar with the Relay framework.
-Uses react-relay-router for routing and mongodb as a db. Has working pagination with previous/next and optimistic updates for all operations.
+##FEATURES:
+- Pagination prev/next
+- Authentication
+- Optimistic updates
+
 Usage:
 -------
 
 ```console
 $ npm install
+$ npm webpack
 $ npm server
-$ npm start
 ```
 
-Then navigate to [http://localhost:5000](http://localhost:5000)
+Then navigate to [http://localhost:3000](http://localhost:3000)
+
+TODO:
+- refractor code related to the auth feature 
+- isomorphism
+- https
