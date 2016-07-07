@@ -53,14 +53,21 @@ class User extends React.Component {
       this.props.cancelOnUnmount(deletePromise);
 
       deletePromise.promise
-          .then(()=>this.setState({deletionFailed: false}))
+          .then(this.setDeletionOk)
           .catch((err)=> {
             if (!err.isCanceled) {
-              this.setState({deletionFailed: true})
+              this.setDeletionFailed();
             }
           })
 
     }
+  }
+
+  setDeletionFailed = this._setDeletionStatus.curry(true)
+  setDeletionOk = this._setDeletionStatus.curry(false)
+
+  _setDeletionStatus(status){
+    this.setState({deletionFailed: status})
   }
 
   activateUser = this._setUserActivation.curry(true);

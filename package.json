@@ -4,10 +4,11 @@
   "private": true,
   "description": "",
   "scripts": {
-    "start": "npm run webpack && npm run server",
-    "dev": "webpack-dev-server",
+    "dev-client": "webpack-dev-server",
+    "dev-server": "npm run server -- development",
+    "webpack": "webpack",
     "server": "./node_modules/.bin/babel-node --presets react,es2015,stage-0 ./server/server.js",
-    "webpack": "webpack"
+    "start": "npm run webpack && npm run server"
   },
   "engines": {
     "node": "4.2.x"

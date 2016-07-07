@@ -5,6 +5,13 @@ var HtmlwebpackPlugin = require('html-webpack-plugin');
 var precss = require('precss');
 var autoprefixer = require('autoprefixer');
 var postcssImport = require('postcss-import');
+
+var TARGET = process.env.npm_lifecycle_event;
+
+const DEV_MODE = TARGET === 'dev';
+
+console.warn("DEV_MODE: " + DEV_MODE);
+
 module.exports = {
   entry: "./js/app.js",
   output: {
@@ -76,7 +83,10 @@ module.exports = {
   , plugins: [
     new webpack.HotModuleReplacementPlugin(),
 
-
+    new webpack.DefinePlugin({
+      __DEV__: DEV_MODE,
+      'process.env.NODE_ENV': JSON.stringify(DEV_MODE ? 'development' : 'production')
+    }),
     // new webpack.DefinePlugin({"global.GENTLY": false}),
 
 

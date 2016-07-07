@@ -19,7 +19,9 @@ import routes from './routes';
 import database  from "../data/database";
 let app = express();
 app.use(cors());
-
+//  schema development easing
+process.devmode = process.argv.indexOf('development') != -1;
+console.warn("process.devmode " + process.devmode)
 var staticPath = path.join(__dirname, "static");
 app.use(express.static(staticPath));
 
@@ -69,7 +71,7 @@ app.set("view engine", "ejs");
     app.set("port", process.env.PORT || 3000);
 
     app.listen(app.get("port"), () => {
-      console.log("listening on port "+app.get("port"))
+      console.log("listening on port " + app.get("port"))
     });
 
 

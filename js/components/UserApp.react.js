@@ -39,14 +39,15 @@ class UserApp extends React.Component {
   }
 
   render() {
+    const sessionId = this.props.store.sessionId
     return (
         <div>
           <div className={this.props.css['main-header']}>
             <Link to="/">Home</Link>
             <Link to="/users">Users</Link>
-               {this.props.store.sessionId ?
+               {!sessionId || sessionId == 'mockSession' ? <Link to="/login">Login</Link> :
                    <a className={this.props.css.link} onClick={this.handleLogout}>Logout</a>
-                   : <Link to="/login">Login</Link>}
+               }
           </div>
           {this.props.children}
         </div>

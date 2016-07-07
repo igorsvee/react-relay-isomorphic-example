@@ -42,6 +42,7 @@ const UserSchema = (db) => {
 
   const dbManager = database(db);
 
+  console.log("process.env.NODE_ENV " + process.env.NODE_ENV)
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
       async(globalId) => {
@@ -105,7 +106,7 @@ const UserSchema = (db) => {
   };
 
   function ensureAuthorization(session) {
-    if (_unauthorized(session)) {
+    if (!process.devmode && _unauthorized(session)) {
       throw errorObj({error: 'Unauthorized'});
     }
   }
@@ -135,7 +136,12 @@ const UserSchema = (db) => {
       sessionId: {
         type: GraphQLString,
         resolve: (obj, args, session) => {
-          return getSessionId(session);
+          const realSessionId = getSessionId(session);
+          if (!realSessionId && process.devmode) {
+            return 'mockSession'
+          }
+
+          return realSessionId;
         }
       }
     })
@@ -420,7 +426,7 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: async({id, username, address, password},session) => {
+    , mutateAndGetPayload: async({id, username, address, password}, session) => {
       ensureAuthorization(session);
 
       const realObjId = fromGlobalId(id).id;
@@ -485,7 +491,7 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: ({id, activated},session) => {
+    , mutateAndGetPayload: ({id, activated}, session) => {
       ensureAuthorization(session);
 
       const realObjId = fromGlobalId(id).id;

@@ -59,11 +59,8 @@ router.post("/login",
 router.post("/logout", function (req, res) {
   if (req.isAuthenticated()) {
     req.logout();
-    res.status(200).send({"ok": true});
-  } else {
-    res.status(406).send({"ok": false});
   }
-
+  res.status(200).send({"ok": true});
 });
 
 
