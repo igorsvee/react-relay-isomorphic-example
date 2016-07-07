@@ -1,11 +1,18 @@
-var ObjectID = require('mongodb').ObjectID;
+const ObjectID = require('mongodb').ObjectID;
 
+const dbManager = (db) => {
 
-export default   (db) => {
-
-  function getUserById(id) {
+  function findUserByName(username) {
     return db.collection("users")
-        .find({_id: id})
+        .find({username})
+        .limit(1)
+        .next();
+
+  }
+
+  function findUserById(id) {
+    return db.collection("users")
+        .find({_id: new ObjectID(id)})
         .limit(1)
         .next();
 
@@ -13,14 +20,14 @@ export default   (db) => {
 
   function getProductById(id) {
     return db.collection("products")
-        .find({_id: id})
+        .find({_id: new ObjectID(id)})
         .limit(1)
         .next();
   }
 
   return {
-    getUserById, getProductById
+    findUserById, getProductById, findUserByName
   }
 };
 
-
+export default  dbManager

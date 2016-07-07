@@ -8,6 +8,7 @@ import User from './User.react'
 import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
+import {withRouter} from 'react-router'
 @autobind
 class Users extends React.Component {
 
@@ -18,8 +19,26 @@ class Users extends React.Component {
       createTransaction: null,
       errorMessage: null,
       paginationError: null
+    };
+
+  }
+
+
+  componentWillMount() {
+    this.forceFetchIfRequired();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps this.props.store  %O next %O", this.props.store, nextProps.store)
+  }
+
+  forceFetchIfRequired() {
+    if (this.props.location.state && this.props.location.state.forceFetch) {
+      console.log("force fetching!!");
+      this.props.relay.forceFetch();
     }
   }
+
 
   afterDelete() {
     const {limit, page} = this.props.relay.variables;
@@ -39,20 +58,21 @@ class Users extends React.Component {
       if (!edge.node.__dataID__) {// newly created node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
-        return <User store={this.props.store} afterDelete={this.afterDelete}
+        return <User store={this.props.store} afterDelete={this.afterDelete} sessionId={this.props.store.sessionId}
                      user={edge.node}/>
       }
 
     })
   }
 
-  componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps this.props.store.userConnection.edges  %O next %O", this.props.store.userConnection.edges, nextProps.store.userConnection.edges)
+
+  isAuthenticated() {
+    return this.props.store.sessionId != null;
   }
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
-    if (this.hasUsers()) {
+    if (this.isAuthenticated() && this.hasUsers()) {
       const currentEdges = this.props.store.userConnection.edges;
       const currentLastEdge = currentEdges[currentEdges.length - 1];
       const nextEdges = nextProps.store.userConnection.edges;
@@ -121,7 +141,7 @@ class Users extends React.Component {
   }
 
   getBottomControls() {
-    if (!this.hasUsers()) {
+    if (!this.isAuthenticated() && !this.hasUsers()) {
       return null;
     }
 
@@ -152,7 +172,7 @@ class Users extends React.Component {
   render() {
     const {relay, store} = this.props;
     const {createTransaction} = this.state;
-
+    // cons
     const currentPage = relay.variables.page;
     const currentLimit = relay.variables.limit;
     return (
@@ -190,36 +210,40 @@ class Users extends React.Component {
 
           </form>
 
-          <table>
+                 {store.sessionId ?
+                     <table>
 
-            <thead>
-            <tr key="head">
-              <th>
-                id
-              </th>
+                       <thead>
+                       <tr key="head">
+                         <th>
+                           id
+                         </th>
 
-              <th>
-                username
-              </th>
+                         <th>
+                           username
+                         </th>
 
-              <th>
-                address
-              </th>
-              <th>
-                activated?
-              </th>
-            </tr>
-            </thead>
+                         <th>
+                           address
+                         </th>
+                         <th>
+                           activated?
+                         </th>
+                       </tr>
+                       </thead>
 
 
-            <tbody>
-            {this.getUsers()}
-            </tbody>
+                       <tbody>
+                       {this.getUsers()}
+                       </tbody>
 
-            <tfoot>
-            {this.getBottomControls()}
-            </tfoot>
-          </table>
+                       <tfoot>
+                       {this.getBottomControls()}
+                       </tfoot>
+                     </table>
+                     : 'Please log in to see the users. Create a user for yourself if you have to'
+                 }
+
 
                  {this.state.paginationError && <h3>{this.state.paginationError}</h3>}
 
@@ -231,17 +255,22 @@ class Users extends React.Component {
 Users = Relay.createContainer(Users, {
   initialVariables: {
     limit: 999,
-    page: 1
+    page: 1,
+    //  non-transient field, based on sessionId
+    isAuthenticated: false
   },
 
   fragments: {
     // and every fragment is a function that return a graphql query
     //  read the global id from the store bc mutation is using it
-    store: () => {
+    store: (obj) => {
+      console.log("Users fragment %O", obj)
+      // @include(if: $isAuthenticated)
       return Relay.QL `
       fragment on Store {
-         id
-       userConnection: userConnectionPaginated(page: $page, limit:$limit){
+         id ,
+         sessionId,
+       userConnection: userConnectionPaginated(page: $page, limit:$limit)  {
            pageInfo: pageInfoPaginated{
               hasNextPage,hasPreviousPage
             },
@@ -262,5 +291,5 @@ Users = Relay.createContainer(Users, {
   }
 });
 
-export default Users;
+export default withRouter(Users);
 

@@ -7,10 +7,8 @@
     "server": "./node_modules/.bin/babel-node --presets react,es2015,stage-0 ./server/server.js",
     "webpack": "webpack"
   },
-
-   "author": "Igor Svystkov",
+  "author": "Igor Svystkov",
   "license": "MIT",
-
   "dependencies": {
     "history": "^2.1.1",
     "jquery": "^2.2.1",
@@ -51,20 +49,29 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-register": "^6.9.0",
     "babel-runtime": "^6.9.0",
-    "babel-relay-plugin": "^0.9.0"
-                               ,
-"bcrypt-nodejs" : "0.0.3"
-
-    ,    "classnames": "^2.2.5",
+    "babel-relay-plugin": "^0.9.0",
+    "bcrypt-nodejs": "^0.0.3",
+    "express-session": "^1.14.0",
+    "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
+    "connect-flash": "^0.1.1",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "ejs": "^2.4.2",
+    "classnames": "^2.2.5",
     "css-loader": "^0.23.1",
     "postcss": "^5.0.21",
+    "react-timer-mixin": "^0.13.3",
     "postcss-cssnext": "^2.6.0",
     "postcss-nesting": "^2.3.1",
     "postcss-loader": "^0.9.1",
     "postcss-import": "^8.1.2",
     "postcss-media-minmax": "^2.1.2",
     "precss": "^1.4.0",
-    "autoprefixer": "^6.3.6"   ,"style-loader": "^0.13.0"  , "react-styleable" : "^2.2.4" ,"postcss-selector-not" :"^2.0.0"
-    ,"ramda": "^0.21.0"
+    "autoprefixer": "^6.3.6",
+    "style-loader": "^0.13.0",
+    "react-styleable": "^2.2.4",
+    "postcss-selector-not": "^2.0.0",
+    "ramda": "^0.21.0"
   }
 }

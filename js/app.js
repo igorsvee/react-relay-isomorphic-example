@@ -15,7 +15,7 @@ Relay.injectNetworkLayer(
     })
 );
 
-const history = useRouterHistory(createHashHistory)({queryKey: false});
+const history = useRouterHistory(createHashHistory)();
 
 // https://gist.github.com/LeZuse/2631422
 Function.prototype.curry = function () {

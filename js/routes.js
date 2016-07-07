@@ -9,10 +9,12 @@ import Users from './components/Users.react'
 import UserConcrete from './components/UserConcrete.react'
 import RouteLoading from './components/RouteLoading.react'
 import UserApp from './components/UserApp.react';
-
+ import Login from './components/Login.react'
 
 export default (
-    <Route path="/" component={UserApp}>
+    <Route path="/" component={UserApp} queries={StoreQueries}>
+
+     <Route path="login" component={Login}  />
 
       <Route path="users"
              render={({props, error}) => {

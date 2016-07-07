@@ -19,6 +19,7 @@ class User extends React.Component {
   static propTypes = {
     store: React.PropTypes.object.isRequired,
     user: React.PropTypes.object.isRequired,
+    sessionId: React.PropTypes.string,
   };
 
   constructor(props, context) {
@@ -35,7 +36,6 @@ class User extends React.Component {
       this.context.router.push("/users/" + id);
     }
   }
-
 
 
   handleDeleteClicked(id) {
@@ -78,7 +78,6 @@ class User extends React.Component {
 
       const updatePromise = commitUpdate(Relay.Store, activationMutation)
       this.props.cancelOnUnmount(updatePromise);
-      // this.cancelablePromises.push(updatePromise);
 
       updatePromise
           .promise
@@ -105,7 +104,8 @@ class User extends React.Component {
     }
 
     const mongoId = toMongoId(relayUserId);
-    const getButton = ({title, clickHandler}) => <button onClick={clickHandler}>{title}</button>
+    const getButton = ({title, clickHandler, disabled}) => (<button disabled={disabled && "disabled"}
+                                                                    onClick={clickHandler}>{title}</button>  )
 
     return (
         <tr style={styles} key={relayUserId}>
@@ -137,7 +137,9 @@ class User extends React.Component {
             {
               getButton({
                 title: 'X',
-                clickHandler: this.handleDeleteClicked(relayUserId)
+                clickHandler: this.handleDeleteClicked(relayUserId),
+                // disable in case it is the same authenticated user
+                disabled: this.props.sessionId == relayUserId ? "disabled" : null
               })
             }
 

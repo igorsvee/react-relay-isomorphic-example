@@ -8,7 +8,7 @@ var postcssImport = require('postcss-import');
 module.exports = {
   entry: "./js/app.js",
   output: {
-    path: __dirname + "/public",
+    path: __dirname + "/server/static",
     filename: "bundle.js"
   },
 
@@ -35,7 +35,7 @@ module.exports = {
 
       }
 
-    ,  {
+      , {
         test: /\.css$/,
         // loaders: ['style', 'css?modules&localIdentName=[local]---[hash:base64:5]', 'cssnext'],  //  2st - css, 1 - css
         // loaders: ['style', 'css?modules&localIdentName=[local]---[hash:base64:5]', 'cssnext'],  //  2st - css, 1 - css
@@ -58,7 +58,6 @@ module.exports = {
     ]
   }
   , devtool: 'eval-source-map'
-  // , devtool: '#eval-cheap-module-source-map'
   ,
   devServer: {
     historyApiFallback: true,
@@ -70,11 +69,7 @@ module.exports = {
 
 
   , node: {
-    // tls: "empty",
-    // console: 'empty',
-    // net:'empty' ,
     fs: 'empty',
-
   }
 
 

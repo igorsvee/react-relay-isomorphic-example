@@ -53,7 +53,7 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await dbManager.getUserById(toMongoId(id));
+            const userDb = await dbManager.findUserById(toMongoId(id));
 
             const userEntity = new User(userDb);
 
@@ -64,7 +64,7 @@ const UserSchema = (db) => {
             console.log("in Product, id:" + id);
             const productDB = await dbManager.getProductById(toMongoId(id));
 
-            const productEntity = new User(productDB);
+            const productEntity = new Product(productDB);
 
             console.log(productEntity);
             return productEntity;
@@ -92,6 +92,24 @@ const UserSchema = (db) => {
       }
   );
 
+  function _unauthorized(session) {
+    return !session || !session.passport || !session.passport.user
+  }
+
+  function getSessionId(session) {
+    return session && session.passport && session.passport.user && toGlobalId('User', session.passport.user)
+  }
+
+  const errorObj = obj => {
+    return new Error(JSON.stringify(obj));
+  };
+
+  function ensureAuthorization(session) {
+    if (_unauthorized(session)) {
+      throw errorObj({error: 'Unauthorized'});
+    }
+  }
+
   const GraphQLStore = new GraphQLObjectType({
     name: 'Store',
 
@@ -106,18 +124,42 @@ const UserSchema = (db) => {
           ...paginatedArgs
         },
 
-        resolve: async(_, args) => {
-
+        resolve: async(_, args, session) => {
+          ensureAuthorization(session);
 
           return await paginatedMongodbConnection(db.collection("users"), args, {})
         }
+      },
+
+      //  session id == user id from the back end, we convert it to relay id
+      sessionId: {
+        type: GraphQLString,
+        resolve: (obj, args, session) => {
+          return getSessionId(session);
+        }
       }
-
-
     })
     ,
     interfaces: [nodeInterface]
 
+  });
+
+  const GraphQLSession = new GraphQLObjectType({
+    name: 'Session',
+    fields: {
+      weight: {
+        type: GraphQLFloat,
+        resolve: (obj) => obj.weight
+      }
+      ,
+      inStock: {
+        type: GraphQLInt,
+        resolve: (obj) => obj.inStock
+      }
+
+
+    },
+    // interfaces: [nodeInterface]
   });
 
   //todo to be used
@@ -196,12 +238,12 @@ const UserSchema = (db) => {
       //   resolve: (obj) => obj._id
       // },
       username: {
-        type: new GraphQLNonNull(GraphQLString),
+        type: GraphQLString,
         resolve: (obj) => obj.username
       }
       ,
       password: {
-        type: new GraphQLNonNull(GraphQLString),
+        type: GraphQLString,
         resolve: (obj) => obj.password
       }
       ,
@@ -252,8 +294,6 @@ const UserSchema = (db) => {
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
         resolve: (obj) => {
-          // console.log("obj %O",obj)
-          console.log("created %O", obj.ops[0])
           return ({node: obj.ops[0]})
         }
 
@@ -279,8 +319,11 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: async({username, address, password}) => {
+    , mutateAndGetPayload: async({username, address, password}, session) => {
+
+
       console.log("inserting: %O", {username, address, password})
+
 
       const hash = await genHash(password);
 
@@ -329,13 +372,15 @@ const UserSchema = (db) => {
 
     ,
 
-    mutateAndGetPayload: ({id}) => {
+    mutateAndGetPayload: ({id}, session) => {
+      ensureAuthorization(session);
+      if (getSessionId(session) == id) {
+        throw errorObj({error: 'Can\'t delete yourself'});
+      }
+
       const objId = fromGlobalId(id).id;
 
-      // return db.collection("users")
-      //     .deleteOne(
-      //         {_id: new ObjectID(objId)}
-      //     );
+
       return db.collection("users")
           .findOneAndDelete(
               {_id: new ObjectID(objId)}
@@ -375,7 +420,9 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: async({id, username, address, password}) => {
+    , mutateAndGetPayload: async({id, username, address, password},session) => {
+      ensureAuthorization(session);
+
       const realObjId = fromGlobalId(id).id;
       console.log("id %s username %s address %s password %s ", id, username, address, password
       )
@@ -438,7 +485,9 @@ const UserSchema = (db) => {
     }
 
 
-    , mutateAndGetPayload: ({id, activated}) => {
+    , mutateAndGetPayload: ({id, activated},session) => {
+      ensureAuthorization(session);
+
       const realObjId = fromGlobalId(id).id;
 
       return db.collection("users")
