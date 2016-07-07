@@ -3,12 +3,15 @@ import Relay from 'react-relay'
 
 
 import {withRouter} from 'react-router'
+import R from'ramda';
+
+import autobind from 'autobind-decorator'
 
 const LOGIN_START = 'start';
 const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
-
+@autobind
 class Login extends React.Component {
 
   constructor(props, context) {
@@ -21,18 +24,22 @@ class Login extends React.Component {
 
   }
 
-  onSubmit =(e)=> {
+  goUsersAndForceFetch() {
+    this.props.router.push({
+      pathname: `/users`
+      , state: {forceFetch: true}
+    })
+  }
+
+  onSubmit = (e)=> {
     e.preventDefault();
 
     const user = {
       username: this.refs.username.value,
       password: this.refs.password.value
     };
-    console.log("sending user: %O", user)
 
-    this.setState({
-      loginStatus: LOGIN_START
-    });
+    this.setLoginStart();
 
     fetch('/login', {
       method: 'post',
@@ -41,68 +48,29 @@ class Login extends React.Component {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(user),
-
       credentials: 'include'
     })
-        .then(response => response.json()
-            .then(json => ({json, response})))
-        .then(({json, response}) => {
+        .then(response => {
           if (!response.ok) {
-            console.log("NOT OK");
-
-            this.setState({
-              loginStatus: LOGIN_FAIL
-            });
-            return Promise.reject(json);
+            this.setLoginFailure();
+            return Promise.reject(response.json());
           }
 
-          console.log("OK !")
-
-          this.setState({
-            loginStatus: LOGIN_SUCCESS
-          },
-              ()=> {
-                this.props.router.push({
-                  pathname: `/users`
-                  ,  state: {forceFetch: true}
-                })
-          });
+          R.compose(this.goUsersAndForceFetch, this.setLoginSuccessful)()
+        })
 
 
-          return json;
-        });
+  };
 
+  setLoginSuccessful = this._setLoginStatus.curry(LOGIN_SUCCESS);
+  setLoginFailure = this._setLoginStatus.curry(LOGIN_SUCCESS);
+  setLoginStart = this._setLoginStatus.curry(LOGIN_START);
 
+  _setLoginStatus(status) {
+    this.setState({loginStatus: status})
   }
 
-  handleTestEndpoint=() => {
-    fetch('/ajax', {
-      method: 'get',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-
-      credentials: 'include'
-    })
-        .then(response => response.json()
-            .then(json => ({json, response})))
-        .then(({json, response}) => {
-          if (!response.ok) {
-            console.log("NOT OK")
-
-            return Promise.reject(json);
-          }
-
-          console.log("OK!")
-
-
-          return json;
-        });
-  }
-
-
-  getStatusMessage =(status)=> {
+  getStatusMessage = (status)=> {
     switch (status) {
       case LOGIN_START:
         return 'Logging in...'
@@ -127,9 +95,6 @@ class Login extends React.Component {
                 {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
           </form>
           {this.getStatusMessage(status)}
-
-          <button onClick={this.handleTestEndpoint}>Test</button>
-
 
         </div>
 
