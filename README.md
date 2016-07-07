@@ -16,4 +16,4 @@ $ npm server
 Then navigate to [http://localhost:3000](http://localhost:3000)
 
 TODO:
-refractor auth feature's related code
+refractor code related to the auth feature 
