@@ -50,10 +50,12 @@ class Login extends React.Component {
       body: JSON.stringify(user),
       credentials: 'include'
     })
-        .then(response => {
+        .then(response => response.json()
+            .then(json => ({json, response})))
+        .then(({json, response}) => {
           if (!response.ok) {
             this.setLoginFailure();
-            return Promise.reject(response.json());
+            return Promise.reject(json);
           }
 
           R.compose(this.goUsersAndForceFetch, this.setLoginSuccessful)()
