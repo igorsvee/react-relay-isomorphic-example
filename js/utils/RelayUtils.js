@@ -49,6 +49,16 @@ export function setRelayVariables(relay, partialVariables) {
   })
 }
 
+export function promisify(cb){
+  return new Promise((resolve, reject)=> {
+    try {
+      resolve(cb())
+    } catch (err) {
+      reject();
+    }
+  })
+}
+
 export function forceFetch(relay,partialVariables) {
   return new Promise((resolve, reject)=> {
     relay.forceFetch(partialVariables, (readyState)=> {

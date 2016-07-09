@@ -11,14 +11,13 @@ const LOGIN_START = 'start';
 const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
-import {forceFetch} from'../utils/RelayUtils'
+import {forceFetch, promisify} from'../utils/RelayUtils'
 
 @autobind
 class Login extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-
 
     this.state = {
       loginStatus: null
@@ -41,32 +40,32 @@ class Login extends React.Component {
       password: this.refs.password.value
     };
 
-    this.setLoginStartStatus();
-
-    fetch('/login', {
-      method: 'post',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(user),
-      credentials: 'include'
-    })
+    promisify(this.setLoginStartStatus)
+        .then(()=> {
+          return fetch('/login', {
+            method: 'post',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(user),
+            credentials: 'include'
+          })
+        })
         .then(response => response.json()
             .then(json => ({json, response})))
         .then(({json, response}) => {
           if (!response.ok) {
-            this.setLoginFailedStatus();
+            console.log("LOGIN NOT OK");
             return Promise.reject(json);
           }
-
-
-          // fetch new sessionId
-          forceFetch(this.props.relay)
-              .then(this.setSuccessfulLoginStatus)
-              .then(this.goUsers);
-
+          console.log("LOGIN OK");
+          return json;
         })
+        .then(forceFetch.curry(this.props.relay))
+        .then(this.setSuccessfulLoginStatus)
+        .then(this.goUsers)
+        .catch(this.setLoginFailedStatus)
 
 
   };
@@ -79,20 +78,23 @@ class Login extends React.Component {
     this.setState({loginStatus: status})
   }
 
-  getStatusMessage = (status)=> {
-    switch (status) {
-      case LOGIN_START:
-        return 'Logging in...'
-      case LOGIN_SUCCESS:
-        return 'Login success! redirecting to users ...'
-      case LOGIN_FAIL:
-        return 'Login failed'
-
-    }
-  }
 
   render() {
     const status = this.state.loginStatus;
+
+    const getStatusMessage = (status)=> {
+      switch (status) {
+        case LOGIN_START:
+          return 'Logging in...';
+        case LOGIN_SUCCESS:
+          return 'Login success! redirecting to users ...';
+        case LOGIN_FAIL:
+          return 'Login failed';
+        default:
+          return 'Unknown login status'
+
+      }
+    };
 
     return (<div>
 
@@ -103,7 +105,7 @@ class Login extends React.Component {
                    placeholder="Password"/>
                 {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
           </form>
-          {this.getStatusMessage(status)}
+          {getStatusMessage(status)}
 
         </div>
 

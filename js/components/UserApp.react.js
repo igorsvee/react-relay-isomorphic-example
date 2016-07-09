@@ -25,7 +25,7 @@ class UserApp extends React.Component {
   componentWillReceiveProps(nextProps) {
     const thisSessionId = this.getSessionIdFromProps(this.props);
     const nextSessionId = this.getSessionIdFromProps(nextProps);
-    console.log("UserApp componentWillReceiveProps this.props %O nextProps", this.props, nextProps)
+    // console.log("UserApp componentWillReceiveProps this.props %O nextProps", this.props, nextProps)
     if (thisSessionId != nextSessionId) {
       this.props.relay.setVariables({
         flag: nextSessionId != null,
@@ -50,6 +50,11 @@ class UserApp extends React.Component {
   }
 
   handleLogout = ()=> {
+    const logoutSuccessPartialVariables = {
+      flag: false,
+      sessionId: null
+    };
+
     fetch('/logout', {
       method: 'post',
       headers: {
@@ -67,18 +72,13 @@ class UserApp extends React.Component {
             return Promise.reject(json);
           }
 
-          const partialVariables = {
-            flag: false,
-            sessionId: null
-          };
-
           console.log("LOGOUT OK");
+          return json;
+        })
+        .then(setRelayVariables.curry(this.props.relay, logoutSuccessPartialVariables))
+        .then(this.props.relay.forceFetch.curry(logoutSuccessPartialVariables))
+        .then(this.goHome);
 
-          setRelayVariables(this.props.relay, partialVariables)
-              .then(()=>this.props.relay.forceFetch(partialVariables))
-              .then(this.goHome);
-
-        });
   }
 
   hasUser() {
@@ -92,7 +92,7 @@ class UserApp extends React.Component {
   render() {
     const {flag, sessionId} = this.props.relay.variables;
 
-    console.warn("Passing down authorized FLAG " + flag);
+    // console.warn("Passing down authorized FLAG " + flag);
     return (
         <div>
           <div className={this.props.css['main-header']}>
