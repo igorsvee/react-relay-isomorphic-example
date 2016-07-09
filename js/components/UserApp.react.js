@@ -8,7 +8,7 @@ import css from './UserApp.css'
 import styleable from 'react-styleable'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
-
+import {setRelayVariables} from'../utils/RelayUtils'
 @styleable(css)
 @autobind
 class UserApp extends React.Component {
@@ -64,7 +64,6 @@ class UserApp extends React.Component {
         .then(({json, response}) => {
           if (!response.ok) {
             console.log("Logout NOT OK");
-
             return Promise.reject(json);
           }
 
@@ -73,14 +72,11 @@ class UserApp extends React.Component {
             sessionId: null
           };
 
-          console.log("LOGOUT OK")
+          console.log("LOGOUT OK");
 
-          this.props.relay.setVariables(partialVariables, (readyState)=> {
-            if (readyState.done) {
-              this.props.relay.forceFetch(partialVariables);
-              this.goHome(); // don't wait for the fetch
-            }
-          })
+          setRelayVariables(this.props.relay, partialVariables)
+              .then(()=>this.props.relay.forceFetch(partialVariables))
+              .then(this.goHome);
 
         });
   }

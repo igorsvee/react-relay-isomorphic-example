@@ -11,6 +11,8 @@ const LOGIN_START = 'start';
 const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
+import {forceFetch} from'../utils/RelayUtils'
+
 @autobind
 class Login extends React.Component {
 
@@ -39,7 +41,7 @@ class Login extends React.Component {
       password: this.refs.password.value
     };
 
-    this.setLoginStart();
+    this.setLoginStartStatus();
 
     fetch('/login', {
       method: 'post',
@@ -54,25 +56,24 @@ class Login extends React.Component {
             .then(json => ({json, response})))
         .then(({json, response}) => {
           if (!response.ok) {
-            this.setLoginFailure();
+            this.setLoginFailedStatus();
             return Promise.reject(json);
           }
 
-          this.setLoginSuccessful()
+
           // fetch new sessionId
-          this.props.relay.forceFetch({}, (readyState)=> {
-            if (readyState.done) {
-              this.goUsers();
-            }
-          });
+          forceFetch(this.props.relay)
+              .then(this.setSuccessfulLoginStatus)
+              .then(this.goUsers);
+
         })
 
 
   };
 
-  setLoginSuccessful = this._setLoginStatus.curry(LOGIN_SUCCESS);
-  setLoginFailure = this._setLoginStatus.curry(LOGIN_FAIL);
-  setLoginStart = this._setLoginStatus.curry(LOGIN_START);
+  setSuccessfulLoginStatus = this._setLoginStatus.curry(LOGIN_SUCCESS);
+  setLoginFailedStatus = this._setLoginStatus.curry(LOGIN_FAIL);
+  setLoginStartStatus = this._setLoginStatus.curry(LOGIN_START);
 
   _setLoginStatus(status) {
     this.setState({loginStatus: status})

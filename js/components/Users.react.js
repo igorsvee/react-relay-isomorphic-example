@@ -276,8 +276,7 @@ Users = Relay.createContainer(Users, {
     // and every fragment is a function that return a graphql query
     //  read the global id from the store bc mutation is using it
     store: () => {
-      // @include(if: $isAuthenticated)
-      // @include(if: $flag)
+
       return Relay.QL `
       fragment on Store {
          id ,

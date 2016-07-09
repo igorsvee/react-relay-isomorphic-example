@@ -37,6 +37,30 @@ export function commitUpdate(RelayStore, mutation) {
   }))
 }
 
+export function setRelayVariables(relay, partialVariables) {
+  return new Promise((resolve, reject)=> {
+    relay.setVariables(partialVariables, (readyState)=> {
+      if (readyState.error) {
+        reject(readyState.error)
+      } else if (readyState.done) {
+        resolve()
+      }
+    })
+  })
+}
+
+export function forceFetch(relay,partialVariables) {
+  return new Promise((resolve, reject)=> {
+    relay.forceFetch(partialVariables, (readyState)=> {
+      if (readyState.error) {
+        reject(readyState.error)
+      } else if(readyState.done) {
+        resolve()
+      }
+    })
+  })
+}
+
 class MongoIdCached {
 
   constructor() {

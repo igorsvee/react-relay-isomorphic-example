@@ -29,13 +29,12 @@ async function prepareUsersParams(params) {
   console.log("prepareUsersParams data  : %O", data) ;
   console.log("prepareUsersParams params :%O", params) ;
 
-
   return {
     ...params,
     sessionId,
   };
 }
-//     prepareParams={prepareUsersParams}
+
 export default (
     <Route path="/" component={UserApp} queries={StoreQueries}>
 

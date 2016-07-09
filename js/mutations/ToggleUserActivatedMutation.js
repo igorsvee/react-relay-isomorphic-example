@@ -19,7 +19,7 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
   }
 
   //  more explicit one also works         -first
-  // store{ userConnectionPaginated(id: "${this.props.id}", first:1) {    edges{ node }   }     }   }
+  // store{ userConnectionPaginated(id: "${this.props.id}", first:1) {    edges{ node }   }     }   }  relay pattern?
   getFatQuery() {
     return Relay.QL`
        fragment on ToggleUserActivatedPayload {
