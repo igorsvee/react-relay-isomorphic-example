@@ -348,7 +348,7 @@ const UserSchema = (db) => {
 
     outputFields: {
 
-      userId: {
+      sessionId: {
         type: new GraphQLNonNull(GraphQLID),
         resolve: (obj) => {
           console.log("userId:obj.value._id: " + obj.value._id)

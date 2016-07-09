@@ -63,33 +63,38 @@ class CreateUserMutation extends Relay.Mutation {
 
 
   getOptimisticResponse() {
-    const currentEdges = this.props.store.userConnection.edges;
-    const currentEdgesLength = currentEdges.length;
+    if (this.props.store.userConnection) { // if the store isn't empty, modify it
+      const currentEdges = this.props.store.userConnection.edges;
+      const currentEdgesLength = currentEdges.length;
 
-    const newEdge = {
-      node: {
-        // id: this.props.newUserId, // irrelevant
-        id: null,
-        username: this.props.username,
-        address: this.props.address,
-        password: this.props.password,
-        activated: false
-      }
-      , optimistic: true
-    };
+      const newEdge = {
+        node: {
+          // id: this.props.newUserId, // irrelevant
+          id: null,
+          username: this.props.username,
+          address: this.props.address,
+          password: this.props.password,
+          activated: false
+        }
+        , optimistic: true
+      };
 
-    return {
-      // newUserEdge: newEdge,
-      store: {
-        id: this.props.store.id,
+      return {
+        // newUserEdge: newEdge,
+        store: {
+          id: this.props.store.id,
 
-        userConnection: {
-          edges: currentEdgesLength < this.props.limit && currentEdges.push(newEdge)
+          userConnection: {
+            edges: currentEdgesLength < this.props.limit && currentEdges.push(newEdge)
+          }
+
         }
 
       }
-
+    } else {
+      return {}
     }
+
 
   }
 

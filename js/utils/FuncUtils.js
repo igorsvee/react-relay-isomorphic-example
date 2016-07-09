@@ -19,7 +19,7 @@ function truthy(obj) {
 // const doWhenYes = doWhen(true);
 // const doWhenNo = doWhen(false)
 
-function doWhenYes(cond, action) {
+export function doWhenYes(cond, action) {
   if (truthy(cond))
     return action();
 

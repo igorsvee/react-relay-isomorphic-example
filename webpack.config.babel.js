@@ -5,18 +5,24 @@ var HtmlwebpackPlugin = require('html-webpack-plugin');
 var precss = require('precss');
 var autoprefixer = require('autoprefixer');
 var postcssImport = require('postcss-import');
-
+var pkg = require('./package.json');
 var TARGET = process.env.npm_lifecycle_event;
 
 const DEV_MODE = TARGET === 'dev';
 
 console.warn("DEV_MODE: " + DEV_MODE);
-
+const deps = Object.keys(pkg.dependencies);
 module.exports = {
-  entry: "./js/app.js",
+
+  entry:{
+    vendor: deps,
+    main: path.resolve(path.resolve(__dirname), './js/app.js')
+  }
+ ,
   output: {
-    path: __dirname + "/server/static",
-    filename: "bundle.js"
+    path: path.resolve(__dirname, './server/static'),
+    chunkFilename: '/[id].chunk.js',
+    filename: DEV_MODE ? '[name].[chunkhash].js' : '[name].[chunkhash].min.js'
   },
 
   postcss: function (webpack) {
@@ -88,7 +94,16 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify(DEV_MODE ? 'development' : 'production')
     }),
     // new webpack.DefinePlugin({"global.GENTLY": false}),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'vendor',
+      filename: 'vendor.[hash].js',
+      //minChunks: 2
 
+
+      minChunks: function (module, count) {
+        return module.resource && module.resource.indexOf(path.join(__dirname, '..', 'node_modules')) === 0;
+      }
+    }),
 
     new HtmlwebpackPlugin({
       title: 'relay_app'

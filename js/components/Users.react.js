@@ -9,6 +9,8 @@ import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
+
+
 @autobind
 class Users extends React.Component {
 
@@ -25,15 +27,22 @@ class Users extends React.Component {
 
 
   componentWillMount() {
-    this.forceFetchIfRequired();
+    // this.forceFetchIfRequired();
+    console.warn("componentWillMount this.props.flag " + this.props.flag)
+    console.log("Users componentWillMount this.props %O ", this.props)
+    this.props.relay.forceFetch({flag: this.props.flag})
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps this.props.store  %O next %O", this.props.store, nextProps.store)
+    console.log("Users componentWillReceiveProps this.props %O next %O", this.props, nextProps);
+    if(this.props.flag != nextProps.flag){
+      console.warn("FLAGS NOT EQUAL");
+      this.props.relay.forceFetch({flag: nextProps.flag})
+    }
   }
 
   forceFetchIfRequired() {
-    if (this.props.location.state && this.props.location.state.forceFetch) {
+    if (this.props.location.state && this.props.location.state.loginSuccess) {
       console.log("force fetching!!");
       this.props.relay.forceFetch();
     }
@@ -58,7 +67,7 @@ class Users extends React.Component {
       if (!edge.node.__dataID__) {// newly created node by optimistic mutation would not have this property
         return <NewUser key={ind} user={edge.node}/>
       } else {
-        return <User store={this.props.store} afterDelete={this.afterDelete} sessionId={this.props.store.sessionId}
+        return <User store={this.props.store} afterDelete={this.afterDelete} sessionId={this.props.sessionId}
                      user={edge.node}/>
       }
 
@@ -67,12 +76,12 @@ class Users extends React.Component {
 
 
   isAuthenticated() {
-    return this.props.store.sessionId != null;
+    return this.props.flag == true;
   }
 
   //optimistic update
   shouldComponentUpdate(nextProps) {
-    if (this.isAuthenticated() && this.hasUsers()) {
+    if (this.isAuthenticated() && this.hasUsers() && this.hasUsers(nextProps)) {
       const currentEdges = this.props.store.userConnection.edges;
       const currentLastEdge = currentEdges[currentEdges.length - 1];
       const nextEdges = nextProps.store.userConnection.edges;
@@ -136,12 +145,12 @@ class Users extends React.Component {
     this.setRelayVariablesAndProcessReadyState({page: this.props.relay.variables.page - 1})
   }
 
-  hasUsers() {
-    return this.props.store.userConnection.edges.length != 0;
+  hasUsers(props = this.props) {
+    return props.store.userConnection && props.store.userConnection.edges && props.store.userConnection.edges.length != 0;
   }
 
   getBottomControls() {
-    if (!this.isAuthenticated() && !this.hasUsers()) {
+    if (!this.isAuthenticated() || !this.hasUsers()) {
       return null;
     }
 
@@ -172,23 +181,27 @@ class Users extends React.Component {
   render() {
     const {relay, store} = this.props;
     const {createTransaction} = this.state;
-    // cons
+
     const currentPage = relay.variables.page;
     const currentLimit = relay.variables.limit;
+    const flag = relay.variables.flag;
+
     return (
         <div>
           <h2>Users
 
             page#{currentPage} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
 
-          Limit: {currentLimit} {currentPage === 1 &&
-        <select defaultValue={currentLimit} onChange={this.handleSelectLimit}>
-          <option value="1">1</option>
-          <option value="3">3</option>
+          {this.isAuthenticated() && <p>Limit: {currentLimit}
+                                               {currentPage === 1 &&
+                                               <select defaultValue={currentLimit} onChange={this.handleSelectLimit}>
+                                                 <option value="1">1</option>
+                                                 <option value="3">3</option>
 
-          <option value="999">999</option>
-        </select>
-        }
+                                                 <option value="999">999</option>
+                                               </select>   }
+          </p>
+          }
 
           <form onSubmit={this.handleSubmit}>
             <input ref="username" type="text" placeholder="username"/>
@@ -210,42 +223,42 @@ class Users extends React.Component {
 
           </form>
 
-                 {store.sessionId ?
-                     <table>
+          {flag ?
+              <table>
 
-                       <thead>
-                       <tr key="head">
-                         <th>
-                           id
-                         </th>
+                <thead>
+                <tr key="head">
+                  <th>
+                    id
+                  </th>
 
-                         <th>
-                           username
-                         </th>
+                  <th>
+                    username
+                  </th>
 
-                         <th>
-                           address
-                         </th>
-                         <th>
-                           activated?
-                         </th>
-                       </tr>
-                       </thead>
-
-
-                       <tbody>
-                       {this.getUsers()}
-                       </tbody>
-
-                       <tfoot>
-                       {this.getBottomControls()}
-                       </tfoot>
-                     </table>
-                     : 'Please log in to see the users. Create a user for yourself if you have to'
-                 }
+                  <th>
+                    address
+                  </th>
+                  <th>
+                    activated?
+                  </th>
+                </tr>
+                </thead>
 
 
-                 {this.state.paginationError && <h3>{this.state.paginationError}</h3>}
+                <tbody>
+                {this.getUsers()}
+                </tbody>
+
+                <tfoot>
+                {this.getBottomControls()}
+                </tfoot>
+              </table>
+              : 'Please log in to see the users or create one first'
+          }
+
+
+          {this.state.paginationError && <h3>{this.state.paginationError}</h3>}
 
         </div>
     )
@@ -256,21 +269,20 @@ Users = Relay.createContainer(Users, {
   initialVariables: {
     limit: 999,
     page: 1,
-    //  non-transient field, based on sessionId
-    isAuthenticated: false
+    flag: false //  isAuthenticated, gets set by the parent
   },
 
   fragments: {
     // and every fragment is a function that return a graphql query
     //  read the global id from the store bc mutation is using it
-    store: (obj) => {
-      console.log("Users fragment %O", obj)
+    store: () => {
       // @include(if: $isAuthenticated)
+      // @include(if: $flag)
       return Relay.QL `
       fragment on Store {
          id ,
-         sessionId,
-       userConnection: userConnectionPaginated(page: $page, limit:$limit)  {
+         
+       userConnection: userConnectionPaginated(page: $page, limit:$limit) @include(if: $flag) {
            pageInfo: pageInfoPaginated{
               hasNextPage,hasPreviousPage
             },
@@ -284,7 +296,7 @@ Users = Relay.createContainer(Users, {
          }
          
       }
-      `
+      `;
 
 
     }

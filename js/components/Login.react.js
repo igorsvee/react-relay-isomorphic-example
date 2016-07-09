@@ -24,10 +24,10 @@ class Login extends React.Component {
 
   }
 
-  goUsersAndForceFetch() {
+  goUsers() {
     this.props.router.push({
       pathname: `/users`
-      , state: {forceFetch: true}
+      , state: {loginSuccess: true}
     })
   }
 
@@ -58,14 +58,20 @@ class Login extends React.Component {
             return Promise.reject(json);
           }
 
-          R.compose(this.goUsersAndForceFetch, this.setLoginSuccessful)()
+          this.setLoginSuccessful()
+          // fetch new sessionId
+          this.props.relay.forceFetch({}, (readyState)=> {
+            if (readyState.done) {
+              this.goUsers();
+            }
+          });
         })
 
 
   };
 
   setLoginSuccessful = this._setLoginStatus.curry(LOGIN_SUCCESS);
-  setLoginFailure = this._setLoginStatus.curry(LOGIN_SUCCESS);
+  setLoginFailure = this._setLoginStatus.curry(LOGIN_FAIL);
   setLoginStart = this._setLoginStatus.curry(LOGIN_START);
 
   _setLoginStatus(status) {
@@ -79,7 +85,7 @@ class Login extends React.Component {
       case LOGIN_SUCCESS:
         return 'Login success! redirecting to users ...'
       case LOGIN_FAIL:
-        return 'Login fail'
+        return 'Login failed'
 
     }
   }
@@ -105,6 +111,24 @@ class Login extends React.Component {
     )
   }
 }
+
+
+Login = Relay.createContainer(Login, {
+  initialVariables: {
+
+    flag: false  // , transient, based on sessionId, needed for the @include query, // isAuthenticated name won;t work for some reason
+
+  },
+
+  fragments: {
+    store: () => Relay.QL`
+     fragment UserInfo on Store{
+      sessionId
+       
+     }
+     `
+  }
+});
 
 
 export default withRouter(Login);
