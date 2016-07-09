@@ -115,11 +115,6 @@ class Login extends React.Component {
 
 
 Login = Relay.createContainer(Login, {
-  initialVariables: {
-
-    flag: false  // , transient, based on sessionId, needed for the @include query, // isAuthenticated name won;t work for some reason
-
-  },
 
   fragments: {
     store: () => Relay.QL`
