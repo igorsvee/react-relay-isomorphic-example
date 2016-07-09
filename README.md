@@ -2,6 +2,8 @@
 ##FEATURES:
 - Pagination prev/next
 - Authentication
+- CRUD operations
+- Routing
 - Optimistic updates
 
 Usage:
