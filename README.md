@@ -1,4 +1,4 @@
-# react-relay-app
+# React-Relay-Example
 ##FEATURES:
 - Pagination prev/next
 - Authentication
