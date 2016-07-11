@@ -21,8 +21,8 @@ import  {
     , mutationWithClientMutationId
 } from 'graphql-relay'
 import database from './database';
-import User from '../js/models/User';
-import Product from '../js/models/Product';
+import User from '../src/models/User';
+import Product from '../src/models/Product';
 import  {
     paginatedDefinitions,
     paginatedArgs,

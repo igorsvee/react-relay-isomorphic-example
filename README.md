@@ -19,3 +19,4 @@ TODO:
 - ~~refractor code related to the auth feature~~ 
 - isomorphism
 - https
+- code splitting

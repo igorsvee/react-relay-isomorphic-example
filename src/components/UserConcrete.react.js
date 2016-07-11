@@ -178,7 +178,7 @@ class UserConcrete extends React.Component {
     this.props.cancelOnUnmount(updatePromise);
 
     updatePromise
-        .promise
+        .getPromise()
         .then(updateSuccessful)
         .catch(updateFailed)
         .finally(this.turnOffEditMode)

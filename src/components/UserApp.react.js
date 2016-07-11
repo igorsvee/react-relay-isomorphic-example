@@ -9,6 +9,7 @@ import styleable from 'react-styleable'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
 import {setRelayVariables} from'../utils/RelayUtils'
+import withStyles from 'isomorphic-style-loader/lib/withStyles';
 @styleable(css)
 @autobind
 class UserApp extends React.Component {
@@ -91,7 +92,6 @@ class UserApp extends React.Component {
 
   render() {
     const {flag, sessionId} = this.props.relay.variables;
-
     // console.warn("Passing down authorized FLAG " + flag);
     return (
         <div>
@@ -140,6 +140,6 @@ UserApp = Relay.createContainer(UserApp, {
      `
   }
 });
-
+// withStyles(css)(UserApp)
 
 export default withRouter(UserApp);

@@ -22,7 +22,6 @@ class Login extends React.Component {
     this.state = {
       loginStatus: null
     }
-
   }
 
   goUsers() {
@@ -66,8 +65,6 @@ class Login extends React.Component {
         .then(this.setSuccessfulLoginStatus)
         .then(this.goUsers)
         .catch(this.setLoginFailedStatus)
-
-
   };
 
   setSuccessfulLoginStatus = this._setLoginStatus.curry(LOGIN_SUCCESS);
@@ -90,8 +87,6 @@ class Login extends React.Component {
           return 'Login success! redirecting to users ...';
         case LOGIN_FAIL:
           return 'Login failed';
-        default:
-          return 'Unknown login status'
 
       }
     };
@@ -103,7 +98,7 @@ class Login extends React.Component {
                    placeholder="Username"/>
             <input name="password" type="password" ref="password"
                    placeholder="Password"/>
-                {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
+            {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
           </form>
           {getStatusMessage(status)}
 
