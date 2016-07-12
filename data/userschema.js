@@ -42,7 +42,6 @@ const UserSchema = (db) => {
 
   const dbManager = database(db);
 
-  console.log("process.env.NODE_ENV " + process.env.NODE_ENV)
 
   const {nodeInterface, nodeField} =  nodeDefinitions(
       async(globalId) => {

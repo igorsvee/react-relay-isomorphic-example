@@ -90,8 +90,7 @@ class Login extends React.Component {
           return 'Login success! redirecting to users ...';
         case LOGIN_FAIL:
           return 'Login failed';
-        default:
-          return 'Unknown login status'
+
 
       }
     };

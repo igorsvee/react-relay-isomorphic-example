@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs'
-import {MongoClient}  from 'mongodb';
+
 import UserSchema from '../data/userschema'
 import GraphQLHTTP from 'express-graphql'
 import path from 'path';
@@ -11,8 +10,7 @@ import flash from 'connect-flash';
 import passport from 'passport';
 import session from 'express-session'
 
-import   {graphql}   from 'graphql';
-import {introspectionQuery} from 'graphql/utilities'
+import {MongoClient}  from 'mongodb';
 import setUpPassport from './setUpPassport';
 
 import routes from './routes';
@@ -32,8 +30,7 @@ app.set("view engine", "ejs");
 (async() => {
   try {
     //  hardcoded pass
-    let db = await MongoClient.connect("mongodb://root:1234@ds015849.mlab.com:15849/rgrs")
-
+    let db = await MongoClient.connect("mongodb://root:1234@ds015849.mlab.com:15849/rgrs");
 
     let schema = UserSchema(db);
 
@@ -74,15 +71,6 @@ app.set("view engine", "ejs");
       console.log("listening on port " + app.get("port"))
     });
 
-
-    //generate schema.json
-    let json = await graphql(schema, introspectionQuery);
-    // transpile graphql queries before shipping them client side
-    fs.writeFile('./data/schema.json', JSON.stringify(json, null, 2), err => {
-      if (err) throw err;
-
-      console.log("JSON schema created")
-    })
   } catch (e) {
     console.log(e)
   }

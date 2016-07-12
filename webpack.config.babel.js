@@ -6,6 +6,7 @@ var precss = require('precss');
 var autoprefixer = require('autoprefixer');
 var postcssImport = require('postcss-import');
 var pkg = require('./package.json');
+var CleanWebpackPlugin = require('clean-webpack-plugin');
 var TARGET = process.env.npm_lifecycle_event;
 
 const DEV_MODE = TARGET === 'dev';
@@ -88,7 +89,11 @@ module.exports = {
 
   , plugins: [
     new webpack.HotModuleReplacementPlugin(),
-
+    new CleanWebpackPlugin(['static'], {
+      root:  path.resolve(path.resolve(__dirname), './server'),
+      verbose: true,
+      dry: false
+    })  ,
     new webpack.DefinePlugin({
       __DEV__: DEV_MODE,
       'process.env.NODE_ENV': JSON.stringify(DEV_MODE ? 'development' : 'production')
