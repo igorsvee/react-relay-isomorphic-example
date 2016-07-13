@@ -2,7 +2,7 @@ require('promise.prototype.finally');
 import  {
 
     fromGlobalId,
-
+    toGlobalId
 } from 'graphql-relay'
 
 // https://github.com/facebook/react/issues/5465#issuecomment-157888325
@@ -93,6 +93,9 @@ class MongoIdCached {
 }
 //  singleton
 export const toMongoId = new MongoIdCached();
+export function toUserRelayId(mongoId) {
+  return toGlobalId("User", mongoId)
+}
 
 
 

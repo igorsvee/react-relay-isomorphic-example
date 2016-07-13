@@ -19,10 +19,11 @@ export default (req, res, next) => {
     } else if (redirectLocation) {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (renderProps) {
-      console.log("renderProps %O",renderProps)
+      // console.log("renderProps %O",renderProps)
       IsomorphicRouter.prepareData(renderProps, networkLayer).then(render, next);
-    } else {
-      res.status(404).send('Not Found');
+    } else {  //not found
+      res.status(404);
+      next(new Error('Not Found'));
     }
 
     function render({data, props}) {

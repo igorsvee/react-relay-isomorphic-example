@@ -9,7 +9,9 @@ import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutatio
 
 import cancelPromises from '../hocs/promisesCancellator';
 
+import autobind from 'autobind-decorator'
 @cancelPromises
+  @autobind
 class User extends React.Component {
 
   static contextTypes = {
@@ -42,6 +44,7 @@ class User extends React.Component {
     return () => {
       const {store, cancelOnUnmount} = this.props;
 
+      console.log("delete mutation store %O",store)
       const deleteMutation = new DeleteUserMutation(
           {
             userId: id,
@@ -58,7 +61,9 @@ class User extends React.Component {
           .then(this.setDeletionOk)
           .catch((err)=> {
             if (!err.isCanceled) {
+
               this.setDeletionFailed();
+              throw err;
             }
           })
 
@@ -68,7 +73,7 @@ class User extends React.Component {
   setDeletionFailed = this._setDeletionStatus.curry(true)
   setDeletionOk = this._setDeletionStatus.curry(false)
 
-  _setDeletionStatus(status) {
+  _setDeletionStatus (status){
     this.setState({deletionFailed: status})
   }
 
@@ -162,7 +167,6 @@ class User extends React.Component {
   }
 }
 
-// fragment on User type!!!
 User = Relay.createContainer(User, {
   fragments: {
     user: () => Relay.QL`

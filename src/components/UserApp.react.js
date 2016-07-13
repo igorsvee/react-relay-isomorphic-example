@@ -8,7 +8,7 @@ import css from './UserApp.css'
 import styleable from 'react-styleable'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
-import {setRelayVariables} from'../utils/RelayUtils'
+import {setRelayVariables, forceFetch} from'../utils/RelayUtils'
 import withStyles from 'isomorphic-style-loader/lib/withStyles';
 @styleable(css)
 @autobind
@@ -90,22 +90,26 @@ class UserApp extends React.Component {
     return this.props.store.userConnection.edges[0].node.username;
   }
 
+  setRootRelayVariables(partialVars){
+  return  setRelayVariables(this.props.relay,partialVars)
+  }
+
   render() {
     const {flag, sessionId} = this.props.relay.variables;
     // console.warn("Passing down authorized FLAG " + flag);
     return (
         <div>
           <div className={this.props.css['main-header']}>
-               {this.isAuthenticated() && this.hasUser() && this.getUserName()}
-                 <Link to="/">Home</Link>
-                 <Link to="/users">Users</Link>
-               {!this.isAuthenticated() || this.getSessionIdFromProps(this.props) == 'mockSession' ?
-                   <Link to="/login">Login</Link> :
-                   <a className={this.props.css.link} onClick={this.handleLogout}>Logout</a>
-               }
+            {this.isAuthenticated() && this.hasUser() && this.getUserName()}
+            <Link to="/">Home</Link>
+            <Link to="/users">Users</Link>
+            {!this.isAuthenticated() || this.getSessionIdFromProps(this.props) == 'mockSession' ?
+                <Link to="/login">Login</Link> :
+                <a className={this.props.css.link} onClick={this.handleLogout}>Logout</a>
+            }
           </div>
           {/*If the child has a relay variable with the same name as the prop that gets passed down, the relay variable will have value automatically  */}
-          {this.props.children && React.cloneElement(this.props.children, {flag, sessionId})}
+          {this.props.children && React.cloneElement(this.props.children)}
 
         </div>
 

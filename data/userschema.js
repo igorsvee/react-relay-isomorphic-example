@@ -30,7 +30,6 @@ import  {
 } from '../server/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
-import {toMongoId} from '../server/serverUtils'
 
 import {genHash} from './dbUtils'
 
@@ -42,19 +41,17 @@ const UserSchema = (db) => {
 
   const dbManager = database(db);
 
-  console.log("process.env.NODE_ENV " + process.env.NODE_ENV)
-
   const {nodeInterface, nodeField} =  nodeDefinitions(
       async(globalId) => {
         const {type, id} = fromGlobalId(globalId);
-
+        console.log("globalId type %s id %s",type,id)
         switch (type) {
           case 'Store':
             console.log("in Store");
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await dbManager.findUserById(toMongoId(id));
+            const userDb = await dbManager.findUserById(id);
 
             const userEntity = new User(userDb);
 
@@ -63,7 +60,7 @@ const UserSchema = (db) => {
 
           case 'Product':
             console.log("in Product, id:" + id);
-            const productDB = await dbManager.getProductById(toMongoId(id));
+            const productDB = await dbManager.getProductById(id);
 
             const productEntity = new Product(productDB);
 
@@ -126,7 +123,7 @@ const UserSchema = (db) => {
         },
 
         resolve: async(_, args, session) => {
-          ensureAuthorization(session);
+          // ensureAuthorization(session);
 
           return await paginatedMongodbConnection(db.collection("users"), args, {})
         }
@@ -237,12 +234,8 @@ const UserSchema = (db) => {
   const GraphQLUser = new GraphQLObjectType({
     name: 'User',
     fields: {
-      //  for connection it requires id
       id: globalIdField('User', user => user._id),
-      // id: {
-      //   type: new GraphQLNonNull(GraphQLID),
-      //   resolve: (obj) => obj._id
-      // },
+
       username: {
         type: GraphQLString,
         resolve: (obj) => obj.username
@@ -357,13 +350,13 @@ const UserSchema = (db) => {
           return (relayId)
         }
       },
-      userEdge: {
+      userEdgePaginated: {
         type: userConnectionPaginated.edgeType,
         // receives obj from below          insertedCount
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
-        // resolve: (obj) => ({node: obj.value})
+        // resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
+        resolve: (obj) => ({node: obj.value})
 
       },
 

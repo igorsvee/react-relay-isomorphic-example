@@ -7,6 +7,7 @@
     "dev-client": "better-npm-run webpack-dev-client",
     "dev-server": "npm run server -- development",
     "server-babel": "./node_modules/.bin/babel-node  ./server/server.js",
+    "schema": "./node_modules/.bin/babel-node --presets react,es2015,stage-0 ./schema.js",
     "server": "node ./server/webpack/server.js",
     "webpack-server": "better-npm-run webpack-server",
     "webpack-client-dev": "better-npm-run webpack-client-dev",

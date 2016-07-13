@@ -2,24 +2,22 @@ import React from 'react'
 import Relay from 'react-relay'
 
 
-let When = React.createClass({
+export default class extends React.Component {
 
+  shouldComponentUpdate() {
+    return false;
+  }
 
-  render: function () {
+  render() {
     return (
         <h4>
           Home page
         </h4>
     )
   }
+}
 
 
 
-});
-
-
-
-
-export default When;
 
 

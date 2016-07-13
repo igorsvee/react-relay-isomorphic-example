@@ -101,9 +101,6 @@ if (SERVER) {
       //   }
       // }),
 
-      // new HtmlwebpackPlugin({
-      //   title: 'relay_app'
-      // })
     ]
   })
 } else {

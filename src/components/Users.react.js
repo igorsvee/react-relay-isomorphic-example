@@ -10,7 +10,7 @@ import NewUser from './NewUser.react'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
 
-
+import {setRelayVariables, forceFetch} from'../utils/RelayUtils'
 @autobind
 class Users extends React.Component {
 
@@ -26,28 +26,36 @@ class Users extends React.Component {
   }
 
 
+
   componentWillMount() {
     // this.forceFetchIfRequired();
-    console.warn("componentWillMount this.props.flag " + this.props.flag)
     console.log("Users componentWillMount this.props %O ", this.props)
-    this.props.relay.forceFetch({flag: this.props.flag})
+
+    if (this.isAuthenticated()) {
+      this._setRelayVariables({
+        isAuthenticated: true,
+      })
+    }
   }
 
   componentWillReceiveProps(nextProps) {
     console.log("Users componentWillReceiveProps this.props %O next %O", this.props, nextProps);
-    if(this.props.flag != nextProps.flag){
-      console.warn("FLAGS NOT EQUAL");
-      this.props.relay.forceFetch({flag: nextProps.flag})
+    // if(this.props.flag != nextProps.flag){
+    //   console.warn("AUTHENTICATION FLAG CHANGED");
+    //   this.props.relay.forceFetch({flag: nextProps.flag})
+    // }
+    const thisSessionId = this.getSessionIdFromProps(this.props);
+    const nextSessionId = this.getSessionIdFromProps(nextProps);
+    // console.log("UserApp componentWillReceiveProps this.props %O nextProps", this.props, nextProps)
+    if (thisSessionId != nextSessionId) {
+      this.props.relay.setVariables({
+        isAuthenticated: nextSessionId != null,
+      })
     }
+
   }
 
-  forceFetchIfRequired() {
-    if (this.props.location.state && this.props.location.state.loginSuccess) {
-      console.log("force fetching!!");
-      this.props.relay.forceFetch();
-    }
-  }
-
+  _setRelayVariables = setRelayVariables.curry(this.props.relay);
 
   afterDelete() {
     const {limit, page} = this.props.relay.variables;
@@ -63,11 +71,14 @@ class Users extends React.Component {
       </tr>
     }
 
-    return this.props.store.userConnection.edges.map((edge, ind) => {
+    return this.props.store.userConnection.edges.map((edge) => {
       if (!edge.node.__dataID__) {// newly created node by optimistic mutation would not have this property
-        return <NewUser key={ind} user={edge.node}/>
+        return <NewUser key={edge.node.username} user={edge.node}/>
       } else {
-        return <User store={this.props.store} afterDelete={this.afterDelete} sessionId={this.props.sessionId}
+        return <User key={edge.node.id}
+                     store={this.props.store}
+                     afterDelete={this.afterDelete}
+                     sessionId={this.props.store.sessionId}
                      user={edge.node}/>
       }
 
@@ -76,7 +87,11 @@ class Users extends React.Component {
 
 
   isAuthenticated() {
-    return this.props.flag == true;
+    return this.getSessionIdFromProps(this.props) != null;
+  }
+
+  getSessionIdFromProps(props){
+    return props.store.sessionId
   }
 
   //optimistic update
@@ -157,7 +172,7 @@ class Users extends React.Component {
     const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfo;
 
     return (
-        <tr>
+        <tr key="bottomControls">
           {hasPreviousPage && <td>
             <button onClick={this.handlePrevPage}> &larr;</button>
           </td>}
@@ -184,7 +199,7 @@ class Users extends React.Component {
 
     const currentPage = relay.variables.page;
     const currentLimit = relay.variables.limit;
-    const flag = relay.variables.flag;
+    const isAuthenticated = relay.variables.isAuthenticated;
 
     return (
         <div>
@@ -223,7 +238,7 @@ class Users extends React.Component {
 
           </form>
 
-          {flag ?
+          {isAuthenticated ?
               <table>
 
                 <thead>
@@ -269,19 +284,16 @@ Users = Relay.createContainer(Users, {
   initialVariables: {
     limit: 999,
     page: 1,
-    flag: false //  isAuthenticated, gets set by the parent
+    isAuthenticated: false //  transient field, based on sessionId fetched by the container
   },
 
   fragments: {
-    // and every fragment is a function that return a graphql query
-    //  read the global id from the store bc mutation is using it
     store: () => {
-
       return Relay.QL `
       fragment on Store {
          id ,
-         
-       userConnection: userConnectionPaginated(page: $page, limit:$limit) @include(if: $flag) {
+          sessionId,
+       userConnection: userConnectionPaginated(page: $page, limit:$limit) @include(if: $isAuthenticated) {
            pageInfo: pageInfoPaginated{
               hasNextPage,hasPreviousPage
             },

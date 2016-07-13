@@ -12,7 +12,7 @@ const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
 import {forceFetch, promisify} from'../utils/RelayUtils'
-
+import {toUserRelayId} from '../utils/RelayUtils'
 @autobind
 class Login extends React.Component {
 
@@ -61,7 +61,8 @@ class Login extends React.Component {
           console.log("LOGIN OK");
           return json;
         })
-        .then(forceFetch.curry(this.props.relay))
+        .then((json)=>forceFetch(this.props.relay))
+        // .then(forceFetch.curry(this.props.relay))
         .then(this.setSuccessfulLoginStatus)
         .then(this.goUsers)
         .catch(this.setLoginFailedStatus)
@@ -117,7 +118,6 @@ Login = Relay.createContainer(Login, {
     store: () => Relay.QL`
      fragment UserInfo on Store{
       sessionId
-       
      }
      `
   }

@@ -21,7 +21,7 @@ class DeleteUserMutation extends Relay.Mutation {
 // (limit: ${this.props.relayVariables.limit},page: ${this.props.relayVariables.page})
   getFatQuery() {
 
-    // userEdge,
+    // userEdgePaginated,
     return Relay.QL`
        fragment on DeleteUserPayload  {
           store{    userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 

@@ -38,7 +38,6 @@ app.set("view engine", "ejs");
     let db = await MongoClient.connect("mongodb://root:1234@ds015849.mlab.com:15849/rgrs")
     let schema = UserSchema(db);
 
-
     // Serve CSS
     app.use('/css/', express.static(path.resolve(__dirname, './static')));
 
@@ -90,11 +89,11 @@ app.set("view engine", "ejs");
     });
 
     /// catch 404 and forwarding to error handler
-    // app.use(function (req, res, next) {
-    //   const err = new Error('Not Found');
-    //   err.status = 404;
-    //   next(err);
-    // });
+    app.use(function (req, res, next) {
+      const err = new Error('Not Found');
+      err.status = 404;
+      next(err);
+    });
 
 
 //     development error handler
@@ -138,6 +137,6 @@ app.set("view engine", "ejs");
   }
 
 
-})()
+}) ()
 
 
