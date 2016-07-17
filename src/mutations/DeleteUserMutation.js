@@ -26,20 +26,12 @@ getFatQuery() {
     return Relay.QL`
        fragment on DeleteUserPayload   {
           deletedUserId,
-          store {  userConnection    } 
+          store { id,  userConnection    } 
            }
        
        `
   }
 
-  // getConfigs() {
-  //   return [{
-  //     type: 'FIELDS_CHANGE',
-  //     fieldIDs: {
-  //       store: this.props.store.id,
-  //     }
-  //   }];
-  // }
 
   getConfigs() {
     return [{

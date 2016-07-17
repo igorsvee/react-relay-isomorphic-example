@@ -29,7 +29,7 @@ Function.prototype.curry = function () {
   const __method = this;
   const args = Array.from(arguments);
   return function () {
-    return __method.apply(this, args.concat(Array.from(arguments)));
+    return __method.call(this, ...args.concat(Array.from(arguments)));
   }
 };
 

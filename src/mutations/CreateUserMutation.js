@@ -24,9 +24,9 @@ class CreateUserMutation extends Relay.Mutation {
   //  newUserEdge ,newUserId  ,
   getFatQuery() {
     return Relay.QL`
-       fragment on CreateUserPayload @relay(pattern: true) {
+       fragment on CreateUserPayload  {
               newUserEdge,
-          store{ id   userConnection { pageInfoPaginated, edges      }     } 
+          store{ id,   userConnection    } 
           
        }
        `

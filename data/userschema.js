@@ -169,7 +169,7 @@ const UserSchema = (db) => {
       userConnection: {
         type: userConnection.connectionType,
         args: {
-          // ...connectionArgs,  //first.. last etc
+          // ...connectionArgs,
           ...paginatedArgs
         },
 
@@ -188,7 +188,7 @@ const UserSchema = (db) => {
         }
       },
 
-      //  session id == user id from the back end, we convert it to relay id
+      //  session id == user id and we convert it to relay id
       sessionId: {
         type: GraphQLString,
         resolve: (obj, args, session) => {

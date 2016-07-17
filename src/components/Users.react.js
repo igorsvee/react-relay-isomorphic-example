@@ -310,17 +310,17 @@ Users = Relay.createContainer(Users, {
   fragments: {
     store: () => Relay.QL `
       fragment on Store {
-         id,
+          id,
           sessionId,
           userConnection (page: $page, limit:$limit) @include(if: $isAuthenticated) {
-            pageInfo{ hasNextPage, hasPreviousPage  },
+           
             pageInfoPaginated (page: $page, limit:$limit)  { hasNextPage, hasPreviousPage , totalNumPages },
             
             edges{
               node{
               id ,
               ${User.getFragment('user')}
-              }, cursor
+              }
                  
           }
           

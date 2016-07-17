@@ -4,14 +4,22 @@
 - Authentication
 - CRUD operations
 - Routing
-- Optimistic updates - don't work in isomorphic branch
+- Optimistic updates - don't work with isomorphic router
 
 Usage:
 -------
+First run
+delete "./babelRelayPlugin" from .babelrc
+$ npm run schema
+revert changes to babelrc
+$ npm run webpack-client-dev
+$ npm run server-babel
+
+Subsequent runs:
 
 ```console
 $ npm run schema
-$ npm run webpack-client-devema
+$ npm run webpack-client-dev
 $ npm run server-babel
 ```
 
