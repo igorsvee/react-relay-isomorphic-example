@@ -1,4 +1,4 @@
-# React-Relay-Example
+# React-Relay-Isomorphic-Example
 ##FEATURES:
 - Pagination prev/next
 - Authentication
