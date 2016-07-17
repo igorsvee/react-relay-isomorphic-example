@@ -24,7 +24,7 @@ class UpdateUserMutation extends Relay.Mutation {
   getFatQuery() {
     return Relay.QL`
        fragment on UpdateUserPayload {
-       store{ id, userConnection(id: "${this.props.id}")     }   }
+       store{ id, userConnection { edges { node { id,username,address  }   }   }     }   }
        `
   }
 
@@ -34,7 +34,18 @@ class UpdateUserMutation extends Relay.Mutation {
       type: 'FIELDS_CHANGE',
 
       fieldIDs: {
-        store: this.props.storeId
+        store:{
+          userConnection: {
+            edges:{
+              node:{
+                id: this.props.id
+              }
+            }
+          }
+        }
+
+
+
       }
     }];
   }

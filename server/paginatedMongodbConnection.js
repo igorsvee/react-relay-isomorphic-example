@@ -129,12 +129,9 @@ export const PageInfoPaginatedType = new GraphQLObjectType({
 });
 
 export async function calcHasNextPrevious(collection,args){
-
-  const totalCountPromise = collection.count();
-
   const {limit,currentPage} = calcPaginationParams(args);
 
-  const totalNumRecords = await totalCountPromise;
+  const totalNumRecords = await collection.count();
 
   return {
     hasNextPage: totalNumRecords != 0 && currentPage * limit < totalNumRecords,
@@ -159,7 +156,7 @@ export function paginatedConnection(collection,args,config){
 
   function mergeWithConfigAndReturn(obj){
     const resultObj =  Object.assign({},config,obj)
-    console.log("mergeWithConfigAndReturn return resultObj %O",resultObj)
+    console.log("mergeWithConfigAndReturn resultObj %O",resultObj)
     return resultObj
   }
 
