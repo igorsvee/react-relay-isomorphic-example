@@ -1,12 +1,11 @@
 import fs from 'fs'
 import {MongoClient}  from 'mongodb';
 import UserSchema from './data/userschema'
-//generate schema.json
 import   {graphql}   from 'graphql';
 import {introspectionQuery} from 'graphql/utilities'
-( async()=> {
-  //  hardcoded pass
 
+( async ()=> {
+  //  hardcoded pass
   let db = await MongoClient.connect("mongodb://root:1234@ds015849.mlab.com:15849/rgrs");
 
   let schema = UserSchema(db);

@@ -14,12 +14,16 @@ const networkLayer = new Relay.DefaultNetworkLayer(GRAPHQL_URL);
 
 export default (req, res, next) => {
   match({routes, location: req.url}, (error, redirectLocation, renderProps) => {
+
+
     if (error) {
+      // console.log("ERROR 1111 %O",error)
       next(error);
     } else if (redirectLocation) {
+      // console.log("REDIRECT 2222 %O",redirectLocation)
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (renderProps) {
-      // console.log("renderProps %O",renderProps)
+      // console.log("renderProps 333 %O",renderProps)
       IsomorphicRouter.prepareData(renderProps, networkLayer).then(render, next);
     } else {  //not found
       res.status(404);

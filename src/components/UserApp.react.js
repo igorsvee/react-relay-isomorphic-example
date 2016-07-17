@@ -9,7 +9,9 @@ import styleable from 'react-styleable'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
 import {setRelayVariables, forceFetch} from'../utils/RelayUtils'
-import withStyles from 'isomorphic-style-loader/lib/withStyles';
+// import withStyles from 'isomorphic-style-loader/lib/withStyles';
+
+
 @styleable(css)
 @autobind
 class UserApp extends React.Component {
@@ -17,7 +19,7 @@ class UserApp extends React.Component {
   componentWillMount() {
     if (this.isAuthenticated()) {
       this.props.relay.setVariables({
-        flag: true,
+        isAuthenticated: true,
         sessionId: this.getSessionIdFromProps(this.props)
       })
     }
@@ -29,7 +31,7 @@ class UserApp extends React.Component {
     // console.log("UserApp componentWillReceiveProps this.props %O nextProps", this.props, nextProps)
     if (thisSessionId != nextSessionId) {
       this.props.relay.setVariables({
-        flag: nextSessionId != null,
+        isAuthenticated: nextSessionId != null,
         sessionId: nextSessionId ? nextSessionId : null
       })
     }
@@ -43,16 +45,15 @@ class UserApp extends React.Component {
     return props.store.sessionId;
   }
 
-  goHome() {
+  goHome =()=> {
     this.props.router.push({
       pathname: `/`
     })
-
   }
 
   handleLogout = ()=> {
     const logoutSuccessPartialVariables = {
-      flag: false,
+      isAuthenticated: false,
       sessionId: null
     };
 
@@ -72,9 +73,7 @@ class UserApp extends React.Component {
             console.log("Logout NOT OK");
             return Promise.reject(json);
           }
-
           console.log("LOGOUT OK");
-          return json;
         })
         .then(setRelayVariables.curry(this.props.relay, logoutSuccessPartialVariables))
         .then(this.props.relay.forceFetch.curry(logoutSuccessPartialVariables))
@@ -90,13 +89,13 @@ class UserApp extends React.Component {
     return this.props.store.userConnection.edges[0].node.username;
   }
 
-  setRootRelayVariables(partialVars){
-  return  setRelayVariables(this.props.relay,partialVars)
+  setRootRelayVariables(partialVars) {
+    return setRelayVariables(this.props.relay, partialVars)
   }
 
   render() {
-    const {flag, sessionId} = this.props.relay.variables;
-    // console.warn("Passing down authorized FLAG " + flag);
+    const {isAuthenticated, sessionId} = this.props.relay.variables;
+    // console.warn("Passing down authorization FLAG " + isAuthenticated);
     return (
         <div>
           <div className={this.props.css['main-header']}>
@@ -109,7 +108,7 @@ class UserApp extends React.Component {
             }
           </div>
           {/*If the child has a relay variable with the same name as the prop that gets passed down, the relay variable will have value automatically  */}
-          {this.props.children && React.cloneElement(this.props.children)}
+          {this.props.children}
 
         </div>
 
@@ -118,11 +117,9 @@ class UserApp extends React.Component {
   }
 }
 
-
 UserApp = Relay.createContainer(UserApp, {
   initialVariables: {
-
-    flag: false  // , transient, based on sessionId, needed for the @include query, // isAuthenticated name won;t work for some reason
+    isAuthenticated: false  // , transient, based on sessionId
     , sessionId: null
   },
 
@@ -130,20 +127,18 @@ UserApp = Relay.createContainer(UserApp, {
     store: () => Relay.QL`
      fragment UserInfo on Store{
       sessionId
-      , userConnection: userConnectionPaginated(id: $sessionId) @include(if: $flag) {
-               edges: edgesPaginated{
+      ,  userConnection( id: $sessionId) @include(if: $isAuthenticated) {
+         edges{
                   node {
                     username,
                   }
           }
        }
        
-       
-       
      }
      `
   }
 });
-// withStyles(css)(UserApp)
+// export default withStyles(css)(UserApp)
 
 export default withRouter(UserApp);

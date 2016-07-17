@@ -3,7 +3,6 @@ import Relay from 'react-relay'
 
 
 import {withRouter} from 'react-router'
-import R from'ramda';
 
 import autobind from 'autobind-decorator'
 
@@ -15,6 +14,7 @@ import {forceFetch, promisify} from'../utils/RelayUtils'
 import {toUserRelayId} from '../utils/RelayUtils'
 @autobind
 class Login extends React.Component {
+
 
   constructor(props, context) {
     super(props, context);
@@ -59,10 +59,8 @@ class Login extends React.Component {
             return Promise.reject(json);
           }
           console.log("LOGIN OK");
-          return json;
         })
-        .then((json)=>forceFetch(this.props.relay))
-        // .then(forceFetch.curry(this.props.relay))
+        .then(forceFetch.bind(this,this.props.relay,{}))
         .then(this.setSuccessfulLoginStatus)
         .then(this.goUsers)
         .catch(this.setLoginFailedStatus)

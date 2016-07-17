@@ -6,9 +6,16 @@ import {
     GraphQLNonNull,
     GraphQLBoolean
 } from 'graphql'
+import R from 'ramda'
+import  {
 
+    connectionFromArray,
+    connectionFromPromisedArray
+
+} from 'graphql-relay'
 
 import {toMongoId} from './serverUtils'
+
 export const LIMIT_PER_PAGE = 1;
 export const DEFAULT_START_PAGE = 1;
 
@@ -24,12 +31,12 @@ export const paginatedArgs = {
   }
 };
 
-function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE}) {
+export function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE}) {
   if (page < 1) {
-    throw new Error("Page starts with 1")
+    throw new Error("Page arg must be positive, got "+page)
   }
   if (limit < 1) {
-    throw new Error("Limit starts with 1")
+    throw new Error("Limit arg must be positive, got "+limit)
   }
 
   return {
@@ -42,7 +49,7 @@ function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE
 function resolveMaybeThunk(thingOrThunk) {
   return typeof thingOrThunk === 'function' ? thingOrThunk() : thingOrThunk;
 }
-
+//deprecated
 const pageInfoType = new GraphQLObjectType({
   name: 'PageInfo',
   description: 'Information about pagination in a connection.',
@@ -57,7 +64,7 @@ const pageInfoType = new GraphQLObjectType({
     }
   })
 });
-
+//deprecated
 export function paginatedDefinitions(config) {
   const {nodeType} = config;
   const name = config.name || nodeType.name;
@@ -102,7 +109,46 @@ export function paginatedDefinitions(config) {
 
 }
 
+export async function calcHasNextPrevious(collection,args){
 
+  const totalCountPromise = collection.count();
+
+  const {limit,currentPage} = calcPaginationParams(args);
+
+  const totalNumRecords = await totalCountPromise;
+
+  return {
+    hasNextPage: totalNumRecords != 0 && currentPage * limit < totalNumRecords,
+    hasPreviousPage: totalNumRecords != 0 && currentPage > 1,
+    totalNumPages: Math.ceil(totalNumRecords/limit)
+  }
+}
+
+export function paginatedConnection(collection,args,config){
+  console.log("paginatedConnection config %O",config)
+  function buildConnectionByConfig(config) {
+    console.log("buildConnectionByConfig : %O",config)
+    const offset = config.offset || 0;
+    const limit = config.limit || 0;
+    const findParams = config.findParams || {};
+
+    const sort = config.sort || undefined;
+    const options = config.options || undefined;
+
+    return connectionFromPromisedArray(collection.find(findParams, options).sort(sort).skip(offset).limit(limit).toArray(),args)
+  }
+
+  function mergeWithConfigAndReturn(obj){
+    const resultObj =  Object.assign({},config,obj)
+    console.log("mergeWithConfigAndReturn return resultObj %O",resultObj)
+    return resultObj
+  }
+
+  return R.compose(buildConnectionByConfig, mergeWithConfigAndReturn, calcPaginationParams)(args) ;
+}
+
+
+//deprecated
 export async function paginatedMongodbConnection(collection, args, config) {
 
   function requestEntities(config) {

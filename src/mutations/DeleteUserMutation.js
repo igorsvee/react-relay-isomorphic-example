@@ -19,79 +19,88 @@ class DeleteUserMutation extends Relay.Mutation {
   // Instead of the server specifying what is returned, the client needs to ask for what it wants
   // Instead of declaring exactly what data you want via a fragment, Relay tries to figure out the minimal amount of data you need in order to update your local graph.
 // (limit: ${this.props.relayVariables.limit},page: ${this.props.relayVariables.page})
-  getFatQuery() {
+// { pageInfoPaginated, edges    }   @relay(pattern: true)
+getFatQuery() {
 
     // userEdgePaginated,
     return Relay.QL`
-       fragment on DeleteUserPayload  {
-          store{    userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
+       fragment on DeleteUserPayload   {
+          deletedUserId,
+          store {  userConnection    } 
            }
        
        `
   }
 
-  getConfigs() {
-    return [{
-      type: 'FIELDS_CHANGE',
-      fieldIDs: {
-        store: this.props.store.id,
-      }
-    }];
-  }
-
   // getConfigs() {
   //   return [{
-  //     type: 'NODE_DELETE',
-  //     parentName: 'store',
-  //     parentID: this.props.store.id,
-  //     connectionName: 'userConnectionPaginated',
-  //
-  //     //The field name in the server response  that contains the DataID of the deleted node
-  //     deletedIDFieldName: 'userId',
-  //
+  //     type: 'FIELDS_CHANGE',
+  //     fieldIDs: {
+  //       store: this.props.store.id,
+  //     }
   //   }];
   // }
 
-  getOptimisticResponse() {
-    /*
-     const newEdges = this.props.store.userConnectionPaginated.edgesPaginated.filter((userEdge) => {
-     return userEdge.node.__dataID__ !== this.props.userId
-     });
+  getConfigs() {
+    return [{
+      type: 'NODE_DELETE',
+      parentName: 'store',
+      parentID: this.props.store.id,
+      connectionName: 'userConnection',
 
-     newEdges.forEach(edge => {
-     // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
+      //The field name in the server response  that contains the DataID of the deleted node
+      deletedIDFieldName: 'deletedUserId',
 
-     })
-     this.props.store.userConnectionPaginated.edgesPaginated.forEach((edge) => {
-     // edge.node.__fragments__  &&  delete edge.node.__fragments__['2::client']
-     })
+    }];
+  }
 
-     const indexOfEdge = this.props.store.userConnectionPaginated.edgesPaginated.findIndex(userEdge => {
-     return userEdge.node.__dataID__ == this.props.userId
-     })
-
-     console.log("before this.props.store.userConnectionPaginated.edgesPaginated %O", this.props.store.userConnectionPaginated.edgesPaginated)
-     // this.props.store.userConnectionPaginated.edgesPaginated.splice(indexOfEdge,1);
-     console.log("after this.props.store.userConnectionPaginated.edgesPaginated %O", this.props.store.userConnectionPaginated.edgesPaginated)
-
-     */
-    return {
-      // userEdge : undefined,
-      store: {
-        id: this.props.store.id,
-
-        userConnectionPaginated: {
-          edgesPaginated: {
-            node: {
-              //  id == username ? ignore, else - render
-              id: this.props.userId
-              , username: this.props.userId
+  getOptimisticResponseQQQ() {
+        console.log("this.props.store DELETE getOptimisticResponse %O",this.props.store)
+    return{
+      deletedUserId: this.props.userId,
+      store:{
+        userConnection:{
+          edges:{
+            node:{
+              id: this.props.userId ,
+              username: this.props.userId
             }
           }
         }
-
       }
-    };
+      // ,store:{
+      //   // id: this.props.store.id,
+      //   userConnection: this.props.store.userConnection
+      // }
+    }
+
+    // return {
+    //     store:{
+    //       id: this.props.store.id,
+    //       userConnection :{
+    //         edges: this.props.store.userConnection.edges.filter((edge)=>{return edge.node.id !== this.props.userId})
+    //       }
+    //     }
+    // }
+
+
+    // return {
+    //   // userEdge : undefined,
+    //   store: {
+    //     id: this.props.store.id,
+    //
+    //     userConnection: {
+    //       edges: {
+    //         node: {
+    //           //  id == username ? ignore, else - render
+    //           id: this.props.userId
+    //           , username: this.props.userId
+    //         }
+    //       }
+    //     }
+    //
+    //   }
+    // };
   }
 
 }

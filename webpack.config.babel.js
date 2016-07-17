@@ -18,6 +18,7 @@ console.log("SERVER " + SERVER)
 console.log("NODE_PATH "+process.env.NODE_PATH)
 
 const common = {
+
   postcss: function (webpack) {
     return [precss, autoprefixer
       , postcssImport({
@@ -30,9 +31,10 @@ const common = {
     loaders: [
       {
         test: /\.js$/, exclude: /node_modules/,
-
         loader: "babel",
         query: {
+          // ignore babelrc, which is used for some package.json scripts.
+          babelrc: !!SERVER,
           cacheDirectory: true,
           plugins: ['transform-decorators-legacy', 'transform-runtime', '../../../babelRelayPlugin'],
           presets: ['es2015', 'stage-0', 'react'],
@@ -42,7 +44,6 @@ const common = {
 
       , {
         test: /\.css$/,
-        // loader: "style-loader!css-loader?modules&localIdentName=[local]---[hash:base64:5]&importLoaders=1!postcss-loader",
         // loader: ExtractTextPlugin.extract("isomorphic-style-loader", "css-loader?modules&localIdentName=[local]---[hash:base64:5]&importLoaders=1", "postcss-loader"),
         loader: ExtractTextPlugin.extract("style-loader", "css-loader?modules&localIdentName=[local]---[hash:base64:5]&importLoaders=1", "postcss-loader"),
         exclude: /node_modules/
@@ -134,14 +135,15 @@ if (SERVER) {
      // },
     plugins: [
       new webpack.HotModuleReplacementPlugin(),
-
+      new ExtractTextPlugin('styles.css'),
       new webpack.DefinePlugin({
         __DEV__: DEVELOPMENT,
         'process.env.NODE_ENV': JSON.stringify(DEVELOPMENT ? 'development' : 'production')
       }),
 
       // new ExtractTextPlugin('styles.[chunkhash].css'),
-      new ExtractTextPlugin('styles.css'),
+
+      // new ExtractTextPlugin('[name].css'),
       // new ExtractTextPlugin("[name]-[chunkhash].css"),
 
       // new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.js')
@@ -153,10 +155,6 @@ if (SERVER) {
       //   minChunks: function (module, count) {
       //     return module.resource && module.resource.indexOf(path.join(__dirname, '..', 'node_modules')) === 0;
       //   }
-      // }),
-
-      // new HtmlwebpackPlugin({
-      //   title: 'relay_app'
       // })
     ]
   })

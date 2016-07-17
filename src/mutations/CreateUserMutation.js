@@ -5,7 +5,7 @@ class CreateUserMutation extends Relay.Mutation {
   getMutation() {
     //the graphql operation for the mutation to invoke
     return Relay.QL`
-          mutation{ createUser}
+          mutation{ createUser }
        `
   }
 
@@ -24,45 +24,32 @@ class CreateUserMutation extends Relay.Mutation {
   //  newUserEdge ,newUserId  ,
   getFatQuery() {
     return Relay.QL`
-       fragment on CreateUserPayload {
-           
-          store{ id   userConnectionPaginated { pageInfoPaginated, edgesPaginated { node { id, username,address,password,activated } }      }     } 
+       fragment on CreateUserPayload @relay(pattern: true) {
+              newUserEdge,
+          store{ id   userConnection { pageInfoPaginated, edges      }     } 
           
        }
        `
   }
 
+  // how to handle response from the server
   getConfigs() {
     return [{
-      type: 'FIELDS_CHANGE',
-      fieldIDs: {
-        store: this.props.store.id,
-        // newUserEdge: this.props.newUserId,
-      }
+      type: 'RANGE_ADD',
+      //  comes from fat query
+      parentName: 'store',
+      parentID: this.props.store.id,
+      connectionName: 'userConnection',
+      edgeName: 'newUserEdge',
+      // edgeName: 'userEdge',
+      rangeBehaviors: {
+        '': 'append'
+
+      },
     }];
   }
 
-  // how to handle response from the server
-  // getConfigs() {
-  //   return [{
-  //     type: 'RANGE_ADD',
-  //     //  comes from fat query
-  //     parentName: 'store',
-  //     parentID: this.props.store.id,
-  //     connectionName: 'userConnectionPaginated',
-  //     edgeName: 'newUserEdge',
-  //     // edgeName: 'userEdge',
-  //     rangeBehaviors: {
-  //       '': 'append'
-  //
-  //     },
-  //   }];
-  // }
-
-  // this.props.store.userConnectionPaginated.edgesPaginated
-
-
-  getOptimisticResponse() {
+  getOptimisticResponseQQQ() {
     if (this.props.store.userConnection) { // if the store isn't empty, modify it
       const currentEdges = this.props.store.userConnection.edges;
       const currentEdgesLength = currentEdges.length;

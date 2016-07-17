@@ -44,7 +44,6 @@ class User extends React.Component {
     return () => {
       const {store, cancelOnUnmount} = this.props;
 
-      console.log("delete mutation store %O",store)
       const deleteMutation = new DeleteUserMutation(
           {
             userId: id,
@@ -59,11 +58,10 @@ class User extends React.Component {
       cancellablePromise
           .getPromise()
           .then(this.setDeletionOk)
+          .then(()=>{this.props.forceFetch()})
           .catch((err)=> {
             if (!err.isCanceled) {
-
               this.setDeletionFailed();
-              throw err;
             }
           })
 
@@ -96,6 +94,7 @@ class User extends React.Component {
       cancellablePromise
           .getPromise()
           .then(()=>this.setState({activationFailed: false}))
+          .then(()=>this.props.forceFetch())
           .catch((err)=> {
             if (!err.isCanceled) {
               this.setState({activationFailed: true})
@@ -152,7 +151,7 @@ class User extends React.Component {
               getButton({
                 title: 'X',
                 clickHandler: this.handleDeleteClicked(relayUserId),
-                // disable in case it is the same authenticated user
+                // disable in case if it's the same authenticated user
                 disabled: this.props.sessionId == relayUserId ? "disabled" : null
               })
             }
@@ -175,7 +174,6 @@ User = Relay.createContainer(User, {
        username,
        address,
        id
-       
      }
      `
   }

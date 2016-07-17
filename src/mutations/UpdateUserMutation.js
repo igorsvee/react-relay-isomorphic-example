@@ -24,7 +24,7 @@ class UpdateUserMutation extends Relay.Mutation {
   getFatQuery() {
     return Relay.QL`
        fragment on UpdateUserPayload {
-       store{ userConnectionPaginated(id: "${this.props.id}")     }   }
+       store{ id, userConnection(id: "${this.props.id}")     }   }
        `
   }
 
@@ -40,12 +40,12 @@ class UpdateUserMutation extends Relay.Mutation {
   }
 
 
-  getOptimisticResponse() {
+  getOptimisticResponseQQ() {
     return {
       store: {
         id: this.props.storeId,
-        userConnectionPaginated: {
-          edgesPaginated: {
+        userConnection: {
+          edges: {
             node: {
               id: this.props.id,
               username: this.props.username,

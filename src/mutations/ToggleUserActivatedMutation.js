@@ -22,8 +22,8 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
   // store{ userConnectionPaginated(id: "${this.props.id}", first:1) {    edges{ node }   }     }   }  relay pattern?
   getFatQuery() {
     return Relay.QL`
-       fragment on ToggleUserActivatedPayload {
-       store{ userConnectionPaginated(id: "${this.props.userId}") {   edgesPaginated{ node { activated } }   }    }   }
+       fragment on ToggleUserActivatedPayload @relay(pattern: true) {
+       store{ id, userConnection(id: "${this.props.userId}") {   edges{ node { activated } }   }    }   }
        `
   }
 
@@ -39,11 +39,11 @@ class ToggleUserActivatedMutation extends Relay.Mutation {
   }
 
 
-  getOptimisticResponse(){
+  getOptimisticResponseQQQ(){
     return {
       store:{
         id : this.props.storeId,
-        userConnectionPaginated:{
+        userConnection:{
           edgesPaginated : {
             node:{
               id: this.props.userId,

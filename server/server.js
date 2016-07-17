@@ -124,14 +124,7 @@ app.set("view engine", "ejs");
     });
 
 
-    //generate schema.json
-    let json = await graphql(schema, introspectionQuery);
-    // transpile graphql queries before shipping them client side
-    fs.writeFile('./data/schema.json', JSON.stringify(json, null, 2), err => {
-      if (err) throw err;
 
-      console.log("JSON schema created")
-    })
   } catch (e) {
     console.log(e)
   }
