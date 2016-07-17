@@ -26,9 +26,8 @@ import Product from '../src/models/Product';
 
 import {toMongoId} from '../server/serverUtils'
 import  {
-    paginatedDefinitions,
-    paginatedArgs,
-    paginatedMongodbConnection, calcPaginationParams, calcHasNextPrevious, paginatedConnection
+    paginatedArgs,   PageInfoPaginatedType,
+     calcHasNextPrevious, paginatedConnection
 } from '../server/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
@@ -206,23 +205,7 @@ const UserSchema = (db) => {
 
   });
 
-  const GraphQLSession = new GraphQLObjectType({
-    name: 'Session',
-    fields: {
-      weight: {
-        type: GraphQLFloat,
-        resolve: (obj) => obj.weight
-      }
-      ,
-      inStock: {
-        type: GraphQLInt,
-        resolve: (obj) => obj.inStock
-      }
 
-
-    },
-    // interfaces: [nodeInterface]
-  });
 
   //todo to be used
   const GraphQLDetails = new GraphQLObjectType({
@@ -291,24 +274,7 @@ const UserSchema = (db) => {
   //  --  //
 
 
-  const PageInfoPaginatedType = new GraphQLObjectType({
-    name: 'PageInfoPaginated',
-    description: 'Information about pagination in a connection.',
-    fields: () => ({
-      hasNextPage: {
-        type: new GraphQLNonNull(GraphQLBoolean),
-        description: 'When paginating forwards, are there more items?'
-      },
-      hasPreviousPage: {
-        type: new GraphQLNonNull(GraphQLBoolean),
-        description: 'When paginating backwards, are there more items?'
-      },
-      totalNumPages: {
-        type: new GraphQLNonNull(GraphQLInt),
-        description: 'Total number of pages.'
-      },
-    })
-  });
+
 
 
   // let userConnection = paginatedDefinitions({
@@ -447,7 +413,7 @@ const UserSchema = (db) => {
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
           // return ({node: obj.value, cursor: obj.value._id})
-          return ({node: obj.value})
+          return ({node: obj.value,cursor:""})
         }
       }
 

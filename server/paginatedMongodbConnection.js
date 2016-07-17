@@ -16,7 +16,7 @@ import  {
 
 import {toMongoId} from './serverUtils'
 
-export const LIMIT_PER_PAGE = 1;
+export const DEFAULT_LIMIT_PER_PAGE = 1;
 export const DEFAULT_START_PAGE = 1;
 
 export const paginatedArgs = {
@@ -31,7 +31,7 @@ export const paginatedArgs = {
   }
 };
 
-export function calcPaginationParams({page = DEFAULT_START_PAGE, limit = LIMIT_PER_PAGE}) {
+export function calcPaginationParams({page = DEFAULT_START_PAGE, limit = DEFAULT_LIMIT_PER_PAGE}) {
   if (page < 1) {
     throw new Error("Page arg must be positive, got "+page)
   }
@@ -108,6 +108,25 @@ export function paginatedDefinitions(config) {
   return {edgeType, connectionType};
 
 }
+
+export const PageInfoPaginatedType = new GraphQLObjectType({
+  name: 'PageInfoPaginated',
+  description: 'Information about pagination in a connection.',
+  fields: () => ({
+    hasNextPage: {
+      type: new GraphQLNonNull(GraphQLBoolean),
+      description: 'When paginating forwards, are there more items?'
+    },
+    hasPreviousPage: {
+      type: new GraphQLNonNull(GraphQLBoolean),
+      description: 'When paginating backwards, are there more items?'
+    },
+    totalNumPages: {
+      type: new GraphQLNonNull(GraphQLInt),
+      description: 'Total number of pages.'
+    },
+  })
+});
 
 export async function calcHasNextPrevious(collection,args){
 

@@ -248,8 +248,6 @@ UserConcrete = Relay.createContainer(UserConcrete, {
   },
 
   fragments: {
-
-// # This fragment only applies to objects of type 'Store'.
     store: (obj) => Relay.QL `
       fragment ff on Store {
              id,
