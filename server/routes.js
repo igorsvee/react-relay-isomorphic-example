@@ -22,9 +22,9 @@ router.use(function (req, res, next) {
 });
 
 
-router.get("/login", function (req, res) {
-  res.render("login");
-});
+// router.get("/login", function (req, res) {
+//   res.render("login");
+// });
 
 router.post("/login",
 
@@ -49,11 +49,6 @@ router.post("/login",
     }
 
 );
-
-// router.get("/",function (req, res, next) {
-//     console.log("MAIN %O"+req)
-//   res.sendFile(path.join(__dirname + '/index.html'));
-// })
 
 
 router.post("/logout", function (req, res) {

@@ -3,7 +3,6 @@ import Relay from 'react-relay'
 
 
 import {withRouter} from 'react-router'
-import R from'ramda';
 
 import autobind from 'autobind-decorator'
 
@@ -12,9 +11,10 @@ const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
 import {forceFetch, promisify} from'../utils/RelayUtils'
-
+import {toUserRelayId} from '../utils/RelayUtils'
 @autobind
 class Login extends React.Component {
+
 
   constructor(props, context) {
     super(props, context);
@@ -22,7 +22,6 @@ class Login extends React.Component {
     this.state = {
       loginStatus: null
     }
-
   }
 
   goUsers() {
@@ -60,14 +59,11 @@ class Login extends React.Component {
             return Promise.reject(json);
           }
           console.log("LOGIN OK");
-          return json;
         })
-        .then(forceFetch.curry(this.props.relay))
+        .then(forceFetch.bind(this,this.props.relay,{}))
         .then(this.setSuccessfulLoginStatus)
         .then(this.goUsers)
         .catch(this.setLoginFailedStatus)
-
-
   };
 
   setSuccessfulLoginStatus = this._setLoginStatus.curry(LOGIN_SUCCESS);
@@ -91,7 +87,6 @@ class Login extends React.Component {
         case LOGIN_FAIL:
           return 'Login failed';
 
-
       }
     };
 
@@ -102,7 +97,7 @@ class Login extends React.Component {
                    placeholder="Username"/>
             <input name="password" type="password" ref="password"
                    placeholder="Password"/>
-                {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
+            {status != LOGIN_SUCCESS && <input type="submit" value="Log in"/> }
           </form>
           {getStatusMessage(status)}
 
@@ -121,7 +116,6 @@ Login = Relay.createContainer(Login, {
     store: () => Relay.QL`
      fragment UserInfo on Store{
       sessionId
-       
      }
      `
   }

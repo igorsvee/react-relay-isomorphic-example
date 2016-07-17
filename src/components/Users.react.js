@@ -8,9 +8,9 @@ import User from './User.react'
 import NewUser from './NewUser.react'
 
 import autobind from 'autobind-decorator'
-import {withRouter} from 'react-router'
+// import {withRouter} from 'react-router'
 
-
+import {setRelayVariables, forceFetch} from'../utils/RelayUtils'
 @autobind
 class Users extends React.Component {
 
@@ -28,26 +28,33 @@ class Users extends React.Component {
 
   componentWillMount() {
     // this.forceFetchIfRequired();
-    console.warn("componentWillMount this.props.flag " + this.props.flag)
     console.log("Users componentWillMount this.props %O ", this.props)
-    this.props.relay.forceFetch({flag: this.props.flag})
+
+    if (this.isAuthenticated()) {
+      this._setRelayVariables({
+        isAuthenticated: true,
+      })
+    }
   }
 
   componentWillReceiveProps(nextProps) {
     console.log("Users componentWillReceiveProps this.props %O next %O", this.props, nextProps);
-    if(this.props.flag != nextProps.flag){
-      console.warn("FLAGS NOT EQUAL");
-      this.props.relay.forceFetch({flag: nextProps.flag})
+    // if(this.props.flag != nextProps.flag){
+    //   console.warn("AUTHENTICATION FLAG CHANGED");
+    //   this.props.relay.forceFetch({flag: nextProps.flag})
+    // }
+    const thisSessionId = this.getSessionIdFromProps(this.props);
+    const nextSessionId = this.getSessionIdFromProps(nextProps);
+    // console.log("UserApp componentWillReceiveProps this.props %O nextProps", this.props, nextProps)
+    if (thisSessionId != nextSessionId) {
+      this.props.relay.setVariables({
+        isAuthenticated: nextSessionId != null,
+      })
     }
+
   }
 
-  forceFetchIfRequired() {
-    if (this.props.location.state && this.props.location.state.loginSuccess) {
-      console.log("force fetching!!");
-      this.props.relay.forceFetch();
-    }
-  }
-
+  _setRelayVariables = setRelayVariables.curry(this.props.relay);
 
   afterDelete() {
     const {limit, page} = this.props.relay.variables;
@@ -56,6 +63,7 @@ class Users extends React.Component {
     }
   }
 
+
   getUsers() {
     if (!this.hasUsers()) {
       return <tr>
@@ -63,12 +71,18 @@ class Users extends React.Component {
       </tr>
     }
 
-    return this.props.store.userConnection.edges.map((edge, ind) => {
+    const forceFetchUsers = forceFetch.curry(this.props.relay);
+
+    return this.props.store.userConnection.edges.map((edge) => {
       if (!edge.node.__dataID__) {// newly created node by optimistic mutation would not have this property
-        return <NewUser key={ind} user={edge.node}/>
+        return <NewUser key={edge.node.username} user={edge.node}/>
       } else {
-        return <User store={this.props.store} afterDelete={this.afterDelete} sessionId={this.props.sessionId}
-                     user={edge.node}/>
+        return <User
+            key={edge.node.id} forceFetch={forceFetchUsers}
+            store={this.props.store}
+            afterDelete={this.afterDelete}
+            sessionId={this.props.store.sessionId}
+            user={edge.node}/>
       }
 
     })
@@ -76,7 +90,11 @@ class Users extends React.Component {
 
 
   isAuthenticated() {
-    return this.props.flag == true;
+    return this.getSessionIdFromProps(this.props) != null;
+  }
+
+  getSessionIdFromProps(props) {
+    return props.store.sessionId
   }
 
   //optimistic update
@@ -117,6 +135,7 @@ class Users extends React.Component {
     transaction.commit();
 
     this.setState({createTransaction: transaction}, this.clearInputFields);
+    this.props.relay.forceFetch();
   }
 
   _setErrorMessage(message) {
@@ -145,6 +164,12 @@ class Users extends React.Component {
     this.setRelayVariablesAndProcessReadyState({page: this.props.relay.variables.page - 1})
   }
 
+  handleNPage(n) {
+    return ()=> {
+      this.setRelayVariablesAndProcessReadyState({page: n})
+    }
+  }
+
   hasUsers(props = this.props) {
     return props.store.userConnection && props.store.userConnection.edges && props.store.userConnection.edges.length != 0;
   }
@@ -154,17 +179,28 @@ class Users extends React.Component {
       return null;
     }
 
-    const {hasNextPage, hasPreviousPage} = this.props.store.userConnection.pageInfo;
+    const {hasNextPage, hasPreviousPage, totalNumPages} = this.props.store.userConnection.pageInfoPaginated;
+
+    let getButtonForPage = (_, ind) => {
+      const page = ind + 1;
+      return (<button disabled={this.props.relay.variables.page === page ? "disabled" : "" }
+                      key={page}
+                      onClick={this.handleNPage(page)}>{page}</button>    )
+    };
 
     return (
-        <tr>
-          {hasPreviousPage && <td>
-            <button onClick={this.handlePrevPage}> &larr;</button>
-          </td>}
-          {hasNextPage && <td>
-            <button onClick={this.handleNextPage}> &rarr;</button>
-          </td>}
-        </tr>
+        <div>
+          {hasPreviousPage &&
+          <button onClick={this.handlePrevPage}> &larr;</button>
+          }
+          {hasNextPage &&
+          <button onClick={this.handleNextPage}> &rarr;</button>
+
+          }
+          <div>
+            <h4>TOTAL: {totalNumPages}</h4>   {Array(totalNumPages).fill(null).map(getButtonForPage)}
+          </div>
+        </div>
     )
   }
 
@@ -184,7 +220,7 @@ class Users extends React.Component {
 
     const currentPage = relay.variables.page;
     const currentLimit = relay.variables.limit;
-    const flag = relay.variables.flag;
+    const isAuthenticated = relay.variables.isAuthenticated;
 
     return (
         <div>
@@ -193,13 +229,13 @@ class Users extends React.Component {
             page#{currentPage} {relay.hasOptimisticUpdate(store) && 'Processing operation...'   } </h2>
 
           {this.isAuthenticated() && <p>Limit: {currentLimit}
-                                               {currentPage === 1 &&
-                                               <select defaultValue={currentLimit} onChange={this.handleSelectLimit}>
-                                                 <option value="1">1</option>
-                                                 <option value="3">3</option>
+            {currentPage === 1 &&
+            <select defaultValue={currentLimit} onChange={this.handleSelectLimit}>
+              <option value="1">1</option>
+              <option value="3">3</option>
 
-                                                 <option value="999">999</option>
-                                               </select>   }
+              <option value="999">999</option>
+            </select>   }
           </p>
           }
 
@@ -209,24 +245,24 @@ class Users extends React.Component {
             <input ref="address" type="text" placeholder="address"/>
             <button type="submit">Create</button>
 
-                { /*
-                 [RelayMutationQueue] access transactions after callback has been called #1221
+            { /*
+             [RelayMutationQueue] access transactions after callback has been called #1221
 
-                 {  createTransaction && createTransaction.getStatus() === 'COMMIT_FAILED' &&
-                 <h3>Creation failed {this.state.errorMessage}
-                 <button onClick={() =>  createTransaction.recommit()}>Retry</button>
-                 </h3>
-                 }
+             {  createTransaction && createTransaction.getStatus() === 'COMMIT_FAILED' &&
+             <h3>Creation failed {this.state.errorMessage}
+             <button onClick={() =>  createTransaction.recommit()}>Retry</button>
+             </h3>
+             }
 
-                 */}
+             */}
 
 
           </form>
 
-          {flag ?
+          {isAuthenticated ?
               <table>
 
-                <thead>
+                <thead key="thead">
                 <tr key="head">
                   <th>
                     id
@@ -246,17 +282,16 @@ class Users extends React.Component {
                 </thead>
 
 
-                <tbody>
+                <tbody key="tbody">
                 {this.getUsers()}
                 </tbody>
 
-                <tfoot>
-                {this.getBottomControls()}
-                </tfoot>
+
               </table>
+
               : 'Please log in to see the users or create one first'
           }
-
+          {this.getBottomControls()}
 
           {this.state.paginationError && <h3>{this.state.paginationError}</h3>}
 
@@ -269,38 +304,32 @@ Users = Relay.createContainer(Users, {
   initialVariables: {
     limit: 999,
     page: 1,
-    flag: false //  isAuthenticated, gets set by the parent
+    isAuthenticated: false //  transient field, based on sessionId fetched by the container
   },
 
   fragments: {
-    // and every fragment is a function that return a graphql query
-    //  read the global id from the store bc mutation is using it
-    store: () => {
-
-      return Relay.QL `
+    store: () => Relay.QL `
       fragment on Store {
-         id ,
-         
-       userConnection: userConnectionPaginated(page: $page, limit:$limit) @include(if: $flag) {
-           pageInfo: pageInfoPaginated{
-              hasNextPage,hasPreviousPage
-            },
-           edges: edgesPaginated{
-                 node{
-                   ${User.getFragment('user')}
-                 } 
+         id,
+          sessionId,
+          userConnection (page: $page, limit:$limit) @include(if: $isAuthenticated) {
+            pageInfo{ hasNextPage, hasPreviousPage  },
+            pageInfoPaginated (page: $page, limit:$limit)  { hasNextPage, hasPreviousPage , totalNumPages },
+            
+            edges{
+              node{
+              id ,
+              ${User.getFragment('user')}
+              }, cursor
                  
-             }
+          }
           
          }
          
       }
-      `;
-
-
-    }
+      `
   }
 });
 
-export default withRouter(Users);
+export default Users;
 

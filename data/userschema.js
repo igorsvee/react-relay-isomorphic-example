@@ -21,16 +21,17 @@ import  {
     , mutationWithClientMutationId
 } from 'graphql-relay'
 import database from './database';
-import User from '../js/models/User';
-import Product from '../js/models/Product';
+import User from '../src/models/User';
+import Product from '../src/models/Product';
+
+import {toMongoId} from '../server/serverUtils'
 import  {
     paginatedDefinitions,
     paginatedArgs,
-    paginatedMongodbConnection
+    paginatedMongodbConnection, calcPaginationParams, calcHasNextPrevious, paginatedConnection
 } from '../server/paginatedMongodbConnection';
 
 var ObjectID = require('mongodb').ObjectID;
-import {toMongoId} from '../server/serverUtils'
 
 import {genHash} from './dbUtils'
 
@@ -42,7 +43,6 @@ const UserSchema = (db) => {
 
   const dbManager = database(db);
 
-
   const {nodeInterface, nodeField} =  nodeDefinitions(
       async(globalId) => {
         const {type, id} = fromGlobalId(globalId);
@@ -53,7 +53,7 @@ const UserSchema = (db) => {
             return store;
           case 'User':
             console.log("in User, id:" + id);
-            const userDb = await dbManager.findUserById(toMongoId(id));
+            const userDb = await dbManager.findUserById(id);
 
             const userEntity = new User(userDb);
 
@@ -62,7 +62,7 @@ const UserSchema = (db) => {
 
           case 'Product':
             console.log("in Product, id:" + id);
-            const productDB = await dbManager.getProductById(toMongoId(id));
+            const productDB = await dbManager.getProductById(id);
 
             const productEntity = new Product(productDB);
 
@@ -110,24 +110,81 @@ const UserSchema = (db) => {
     }
   }
 
+
+  const GraphQLUser = new GraphQLObjectType({
+    name: 'User',
+    fields: {
+      id: globalIdField('User', user => user._id),
+
+      username: {
+        type: GraphQLString,
+        resolve: (obj) => obj.username
+      }
+      ,
+      password: {
+        type: GraphQLString,
+        resolve: (obj) => obj.password
+      }
+      ,
+      address: {
+        type: GraphQLString,
+        resolve: (obj) => obj.address
+      }
+      ,
+      activated: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        resolve: (obj) => obj.activated
+      }
+
+
+    },
+    interfaces: [nodeInterface]
+  });
+
+  let userConnection = connectionDefinitions({
+    name: 'User',
+    nodeType: GraphQLUser,
+
+    connectionFields: () => ({
+      pageInfoPaginated: {
+        type: PageInfoPaginatedType,
+
+        args: {
+          ...paginatedArgs
+        },
+
+        resolve: async(obj, args) => {
+          return await calcHasNextPrevious(db.collection("users"), args);
+        }
+      }
+    }),
+  });
+
   const GraphQLStore = new GraphQLObjectType({
     name: 'Store',
 
     fields: () =>({
-      // relay helper to generate
       id: globalIdField("Store"),
-      userConnectionPaginated: {
-        type: userConnectionPaginated.connectionType,
-        //relay helper ,extend it
+
+      userConnection: {
+        type: userConnection.connectionType,
         args: {
           // ...connectionArgs,  //first.. last etc
           ...paginatedArgs
         },
 
-        resolve: async(_, args, session) => {
-          ensureAuthorization(session);
+        resolve: (_, args, session) => {
+          console.log("userConnection args: %O, ", args)
+          // ensureAuthorization(session);
 
-          return await paginatedMongodbConnection(db.collection("users"), args, {})
+          const config = {findParams: {}};
+
+          const {id} = args;
+          if (id) {
+            config.findParams._id = toMongoId(id);
+          }
+
+          return paginatedConnection(db.collection("users"), args, config)
         }
       },
 
@@ -233,49 +290,31 @@ const UserSchema = (db) => {
 
   //  --  //
 
-  const GraphQLUser = new GraphQLObjectType({
-    name: 'User',
-    fields: {
-      //  for connection it requires id
-      id: globalIdField('User', user => user._id),
-      // id: {
-      //   type: new GraphQLNonNull(GraphQLID),
-      //   resolve: (obj) => obj._id
-      // },
-      username: {
-        type: GraphQLString,
-        resolve: (obj) => obj.username
-      }
-      ,
-      password: {
-        type: GraphQLString,
-        resolve: (obj) => obj.password
-      }
-      ,
-      address: {
-        type: GraphQLString,
-        resolve: (obj) => obj.address
-      }
-      ,
-      activated: {
+
+  const PageInfoPaginatedType = new GraphQLObjectType({
+    name: 'PageInfoPaginated',
+    description: 'Information about pagination in a connection.',
+    fields: () => ({
+      hasNextPage: {
         type: new GraphQLNonNull(GraphQLBoolean),
-        resolve: (obj) => obj.activated
-      }
-
-
-    },
-    interfaces: [nodeInterface]
+        description: 'When paginating forwards, are there more items?'
+      },
+      hasPreviousPage: {
+        type: new GraphQLNonNull(GraphQLBoolean),
+        description: 'When paginating backwards, are there more items?'
+      },
+      totalNumPages: {
+        type: new GraphQLNonNull(GraphQLInt),
+        description: 'Total number of pages.'
+      },
+    })
   });
 
-  // let userConnection= connectionDefinitions({
-  //   name: 'User',
+
+  // let userConnection = paginatedDefinitions({
+  //   name: 'Users',
   //   nodeType: GraphQLUser
   // });
-
-  let userConnectionPaginated = paginatedDefinitions({
-    name: 'User',
-    nodeType: GraphQLUser
-  });
 
 
   let createUserMutation = mutationWithClientMutationId({
@@ -293,13 +332,13 @@ const UserSchema = (db) => {
 
       newUserEdge: {
         // userEdge: {
-        type: userConnectionPaginated.edgeType,
+        type: userConnection.edgeType,
         // receives obj from below         
 
         // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
         // resolve: (obj,contextt,info) => ({node: obj.ops[0], cursor: obj.insertedId})
         resolve: (obj) => {
-          return ({node: obj.ops[0]})
+          return ({node: obj.ops[0], cursor: ""})
         }
 
       },
@@ -325,10 +364,7 @@ const UserSchema = (db) => {
 
 
     , mutateAndGetPayload: async({username, address, password}, session) => {
-
-
       console.log("inserting: %O", {username, address, password})
-
 
       const hash = await genHash(password);
 
@@ -347,24 +383,24 @@ const UserSchema = (db) => {
 
     outputFields: {
 
-      sessionId: {
+      deletedUserId: {
         type: new GraphQLNonNull(GraphQLID),
         resolve: (obj) => {
-          console.log("userId:obj.value._id: " + obj.value._id)
+          console.log("removeUserMutation userId:obj.value._id: " + obj.value._id)
           const relayId = toGlobalId('User', obj.value._id)
-          console.log("relayId " + relayId)
+          console.log("removeUserMutation relayId " + relayId)
           return (relayId)
         }
       },
-      userEdge: {
-        type: userConnectionPaginated.edgeType,
-        // receives obj from below          insertedCount
-
-        // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
-        resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
-        // resolve: (obj) => ({node: obj.value})
-
-      },
+      // userEdgePaginated: {
+      //   type: userConnection.edgeType,
+      //   // receives obj from below          insertedCount
+      //
+      //   // Edge types must have fields named node and cursor. They may have additional fields related to the edge, as the schema designer sees fit.
+      //   // resolve: (obj) => ({node: obj.value, cursor: obj.value._id})
+      //   resolve: (obj) => ({node: obj.value})
+      //
+      // },
 
       store: {
         type: GraphQLStore,
@@ -407,7 +443,7 @@ const UserSchema = (db) => {
     outputFields: {
       //todo its a description of the query on the left
       userEdge: {
-        type: userConnectionPaginated.edgeType,
+        type: userConnection.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
           // return ({node: obj.value, cursor: obj.value._id})
@@ -472,7 +508,7 @@ const UserSchema = (db) => {
     outputFields: {
       //todo its a description of the query on the left
       userEdge: {
-        type: userConnectionPaginated.edgeType,
+        type: userConnection.edgeType,
         //todo receives obj from result of the mongodb operation below
         resolve: (obj) => {
           // return ({node: obj.value, cursor: obj.value._id})

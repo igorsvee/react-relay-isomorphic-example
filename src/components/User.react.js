@@ -9,7 +9,9 @@ import ToggleUserActivatedMutation from '../mutations/ToggleUserActivatedMutatio
 
 import cancelPromises from '../hocs/promisesCancellator';
 
+import autobind from 'autobind-decorator'
 @cancelPromises
+  @autobind
 class User extends React.Component {
 
   static contextTypes = {
@@ -40,20 +42,23 @@ class User extends React.Component {
 
   handleDeleteClicked(id) {
     return () => {
+      const {store, cancelOnUnmount} = this.props;
 
       const deleteMutation = new DeleteUserMutation(
           {
             userId: id,
-            store: this.props.store
+            store
           }
       );
 
 
-      const deletePromise = commitUpdate(Relay.Store, deleteMutation);
-      this.props.cancelOnUnmount(deletePromise);
+      const cancellablePromise = commitUpdate(Relay.Store, deleteMutation);
+      cancelOnUnmount(cancellablePromise);
 
-      deletePromise.promise
+      cancellablePromise
+          .getPromise()
           .then(this.setDeletionOk)
+          .then(()=>{this.props.forceFetch()})
           .catch((err)=> {
             if (!err.isCanceled) {
               this.setDeletionFailed();
@@ -66,7 +71,7 @@ class User extends React.Component {
   setDeletionFailed = this._setDeletionStatus.curry(true)
   setDeletionOk = this._setDeletionStatus.curry(false)
 
-  _setDeletionStatus(status){
+  _setDeletionStatus (status){
     this.setState({deletionFailed: status})
   }
 
@@ -83,12 +88,13 @@ class User extends React.Component {
           }
       );
 
-      const updatePromise = commitUpdate(Relay.Store, activationMutation)
-      this.props.cancelOnUnmount(updatePromise);
+      const cancellablePromise = commitUpdate(Relay.Store, activationMutation)
+      this.props.cancelOnUnmount(cancellablePromise);
 
-      updatePromise
-          .promise
+      cancellablePromise
+          .getPromise()
           .then(()=>this.setState({activationFailed: false}))
+          .then(()=>this.props.forceFetch())
           .catch((err)=> {
             if (!err.isCanceled) {
               this.setState({activationFailed: true})
@@ -107,7 +113,7 @@ class User extends React.Component {
 
     let styles = {};
     if (relayUserId == currentUsername) {//is set by delete mutation optimistic update
-      styles = {display: 'none'};  // hide instead of returning null so the component doesn't get unmounted and the state is retained
+      styles = {display: 'none'};  // hide instead of returning null so the component doesn't get unmounted and to preserve it's state
     }
 
     const mongoId = toMongoId(relayUserId);
@@ -120,15 +126,15 @@ class User extends React.Component {
           <td>{currentUsername}</td>
           <td>{user.address}</td>
           <td>         {user.activated ? 'YES' : 'NO'}
-                       {user.activated ?
-                           getButton({
-                             title: 'Deactivate',
-                             clickHandler: this.deactivateUser(relayUserId)
-                           }) :
-                           getButton({
-                             title: 'Activate',
-                             clickHandler: this.activateUser(relayUserId)
-                           })}
+            {user.activated ?
+                getButton({
+                  title: 'Deactivate',
+                  clickHandler: this.deactivateUser(relayUserId)
+                }) :
+                getButton({
+                  title: 'Activate',
+                  clickHandler: this.activateUser(relayUserId)
+                })}
           </td>
           <td>
             {
@@ -145,22 +151,21 @@ class User extends React.Component {
               getButton({
                 title: 'X',
                 clickHandler: this.handleDeleteClicked(relayUserId),
-                // disable in case it is the same authenticated user
+                // disable in case if it's the same authenticated user
                 disabled: this.props.sessionId == relayUserId ? "disabled" : null
               })
             }
 
           </td>
-            {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
-            {this.state.activationFailed && 'Activation Failed'}
-            {this.state.deletionFailed && 'Deletion Failed'}
+          {relay.hasOptimisticUpdate(user) && <td>Processing node ...</td> }
+          {this.state.activationFailed && 'Activation Failed'}
+          {this.state.deletionFailed && 'Deletion Failed'}
         </tr>)
 
 
   }
 }
 
-// fragment on User type!!!
 User = Relay.createContainer(User, {
   fragments: {
     user: () => Relay.QL`
@@ -169,7 +174,6 @@ User = Relay.createContainer(User, {
        username,
        address,
        id
-       
      }
      `
   }

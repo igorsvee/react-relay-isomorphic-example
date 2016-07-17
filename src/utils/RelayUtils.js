@@ -2,7 +2,7 @@ require('promise.prototype.finally');
 import  {
 
     fromGlobalId,
-
+    toGlobalId
 } from 'graphql-relay'
 
 // https://github.com/facebook/react/issues/5465#issuecomment-157888325
@@ -19,14 +19,16 @@ const makeCancelable = (promise) => {
   });
 
   return {
-    promise: wrappedPromise,
+    getPromise(){
+      return wrappedPromise
+    },
     cancel() {
       hasCanceled_ = true;
     },
   };
 };
 
-
+// returns cancelable promise
 export function commitUpdate(RelayStore, mutation) {
   return makeCancelable(new Promise((resolve, reject) => {
     RelayStore.commitUpdate(mutation,
@@ -49,22 +51,23 @@ export function setRelayVariables(relay, partialVariables) {
   })
 }
 
-export function promisify(cb){
+export function promisify(cb) {
   return new Promise((resolve, reject)=> {
     try {
       resolve(cb())
     } catch (err) {
-      reject();
+      reject(err.message);
     }
   })
 }
 
-export function forceFetch(relay,partialVariables) {
+export function forceFetch(relay, partialVariables) {
   return new Promise((resolve, reject)=> {
     relay.forceFetch(partialVariables, (readyState)=> {
+      //  todo better logic?
       if (readyState.error) {
         reject(readyState.error)
-      } else if(readyState.done) {
+      } else if (readyState.done) {
         resolve()
       }
     })
@@ -90,6 +93,9 @@ class MongoIdCached {
 }
 //  singleton
 export const toMongoId = new MongoIdCached();
+export function toUserRelayId(mongoId) {
+  return toGlobalId("User", mongoId)
+}
 
 
 

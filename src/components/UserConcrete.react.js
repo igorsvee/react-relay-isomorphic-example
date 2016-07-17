@@ -87,7 +87,7 @@ class UserConcrete extends React.Component {
       </td>
     };
 
-    return ( <tr>
+    return ( <tr >
           {Object.keys(user).map((fieldName) => {
             if (this.state.editMode && this.editableUserFields.includes(fieldName)) {//  is editable and edit mode is turned on
               return getInputField(fieldName)
@@ -178,8 +178,9 @@ class UserConcrete extends React.Component {
     this.props.cancelOnUnmount(updatePromise);
 
     updatePromise
-        .promise
+        .getPromise()
         .then(updateSuccessful)
+        .then(()=>{this.props.relay.forceFetch()})
         .catch(updateFailed)
         .finally(this.turnOffEditMode)
 
@@ -222,7 +223,7 @@ class UserConcrete extends React.Component {
         <div>
           <h1>Concrete page for {user.username}:</h1>
           <table>
-            <tr>
+            <tr key="tHead">
               {Object.keys(user).map((fieldName) => <td>{fieldName} </td>)}
             </tr>
 
@@ -249,14 +250,11 @@ UserConcrete = Relay.createContainer(UserConcrete, {
   fragments: {
 
 // # This fragment only applies to objects of type 'Store'.
-    store: (obj) => {
-      console.log("obj %O", obj)
-
-      return Relay.QL `
+    store: (obj) => Relay.QL `
       fragment ff on Store {
              id,
-           userConnection: userConnectionPaginated(id: $userId) {
-               edges: edgesPaginated{
+          userConnection(id: $userId) {
+               edges{
                   node {
     username,
     id,
@@ -269,8 +267,6 @@ UserConcrete = Relay.createContainer(UserConcrete, {
        }
       }
       `
-
-    }
 
 
   }
