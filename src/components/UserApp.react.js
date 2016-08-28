@@ -8,7 +8,7 @@ import css from './UserApp.css'
 import styleable from 'react-styleable'
 import autobind from 'autobind-decorator'
 import {withRouter} from 'react-router'
-import {setRelayVariables, forceFetch} from'../utils/RelayUtils'
+import {setRelayVariables, forceFetch, checkResponseOk} from'../utils/RelayUtils'
 // import withStyles from 'isomorphic-style-loader/lib/withStyles';
 
 
@@ -45,16 +45,17 @@ class UserApp extends React.Component {
     return props.store.sessionId;
   }
 
-  goHome =()=> {
-    this.props.router.push({
-      pathname: `/`
-    })
-  }
 
   handleLogout = ()=> {
     const logoutSuccessPartialVariables = {
       isAuthenticated: false,
       sessionId: null
+    };
+
+    const goHome = ()=> {
+      this.props.router.push({
+        pathname: `/`
+      })
     };
 
     fetch('/logout', {
@@ -63,21 +64,12 @@ class UserApp extends React.Component {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-
       credentials: 'include'
     })
-        .then(response => response.json()
-            .then(json => ({json, response})))
-        .then(({json, response}) => {
-          if (!response.ok) {
-            console.log("Logout NOT OK");
-            return Promise.reject(json);
-          }
-          console.log("LOGOUT OK");
-        })
+        .then(checkResponseOk)
         .then(setRelayVariables.curry(this.props.relay, logoutSuccessPartialVariables))
         .then(this.props.relay.forceFetch.curry(logoutSuccessPartialVariables))
-        .then(this.goHome);
+        .then(goHome);
 
   }
 

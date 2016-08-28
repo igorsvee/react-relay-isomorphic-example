@@ -10,7 +10,7 @@ const LOGIN_START = 'start';
 const LOGIN_SUCCESS = 'success';
 const LOGIN_FAIL = 'fail';
 
-import {forceFetch, promisify} from'../utils/RelayUtils'
+import {forceFetch, promisify,checkResponseOk} from'../utils/RelayUtils'
 import {toUserRelayId} from '../utils/RelayUtils'
 @autobind
 class Login extends React.Component {
@@ -24,13 +24,6 @@ class Login extends React.Component {
     }
   }
 
-  goUsers() {
-    this.props.router.push({
-      pathname: `/users`
-      , state: {loginSuccess: true}
-    })
-  }
-
   onSubmit = (e)=> {
     e.preventDefault();
 
@@ -39,41 +32,40 @@ class Login extends React.Component {
       password: this.refs.password.value
     };
 
-    promisify(this.setLoginStartStatus)
-        .then(()=> {
-          return fetch('/login', {
-            method: 'post',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(user),
-            credentials: 'include'
-          })
+    const goUsers = () => (
+        this.props.router.push({
+          pathname: `/users`
+          , state: {loginSuccess: true}
         })
-        .then(response => response.json()
-            .then(json => ({json, response})))
-        .then(({json, response}) => {
-          if (!response.ok) {
-            console.log("LOGIN NOT OK");
-            return Promise.reject(json);
-          }
-          console.log("LOGIN OK");
-        })
-        .then(forceFetch.bind(this,this.props.relay,{}))
-        .then(this.setSuccessfulLoginStatus)
-        .then(this.goUsers)
-        .catch(this.setLoginFailedStatus)
+    );
+
+    const setLoginStatus = (loginStatus) => {
+      this.setState({loginStatus})
+    };
+
+    const forceFetchWithEmptyPartialVariables = forceFetch.curry(this.props.relay, {});
+    const setSuccessfulLoginStatus = setLoginStatus.curry(LOGIN_SUCCESS);
+    const setLoginFailedStatus = setLoginStatus.curry(LOGIN_FAIL);
+    const setLoginStartStatus = setLoginStatus.curry(LOGIN_START);
+
+    promisify(setLoginStartStatus)
+        .then(() => (
+            fetch('/login', {
+              method: 'post',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(user),
+              credentials: 'include'
+            })
+        ))
+        .then(checkResponseOk)
+        .then(forceFetchWithEmptyPartialVariables)
+        .then(setSuccessfulLoginStatus)
+        .then(goUsers)
+        .catch(setLoginFailedStatus)
   };
-
-  setSuccessfulLoginStatus = this._setLoginStatus.curry(LOGIN_SUCCESS);
-  setLoginFailedStatus = this._setLoginStatus.curry(LOGIN_FAIL);
-  setLoginStartStatus = this._setLoginStatus.curry(LOGIN_START);
-
-  _setLoginStatus(status) {
-    this.setState({loginStatus: status})
-  }
-
 
   render() {
     const status = this.state.loginStatus;

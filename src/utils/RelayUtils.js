@@ -61,6 +61,14 @@ export function promisify(cb) {
   })
 }
 
+export const checkResponseOk = (response) => {
+  if (!response.ok) {
+    return Promise.reject(new Error(response.statusText || response.status));
+  }
+
+  return response;
+}
+
 export function forceFetch(relay, partialVariables) {
   return new Promise((resolve, reject)=> {
     relay.forceFetch(partialVariables, (readyState)=> {

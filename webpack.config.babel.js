@@ -1,4 +1,3 @@
-var babelPlugin = require("./babelRelayPlugin");
 var path = require('path');
 var webpack = require('webpack');
 var HtmlwebpackPlugin = require('html-webpack-plugin');
@@ -18,7 +17,10 @@ console.log("SERVER " + SERVER)
 console.log("NODE_PATH "+process.env.NODE_PATH)
 
 const common = {
-
+  //todo properly in babelrc
+    // ,"prepend": ["postcss-cssnext","postcss-media-minmax","postcss-nesting"]
+    // ,"preprocessCss": "precss"
+    // ,"prepend": ["postcss-cssnext"]
   postcss: function (webpack) {
     return [precss, autoprefixer
       , postcssImport({

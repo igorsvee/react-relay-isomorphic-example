@@ -1,6 +1,8 @@
 {
   "plugins": ["transform-decorators-legacy", "transform-runtime", "./babelRelayPlugin",["css-modules-transform",{
     "generateScopedName": "[local]---[hash:base64:5]"
+  ,"prepend": ["postcss-cssnext","postcss-media-minmax","postcss-nesting"]
+
   }]
   ],
   "presets": ["es2015", "stage-0", "react"]
