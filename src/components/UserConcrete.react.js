@@ -29,9 +29,9 @@ class UserConcrete extends React.Component {
        propName2: '',
        },
        */
-      user: this.editableUserFields.reduce((prev, propName)=> {
-        prev[propName] = '';
-        return prev
+      user: this.editableUserFields.reduce((obj, propName)=> {
+        obj[propName] = '';
+        return obj
       }, {}),
     };
 
@@ -173,14 +173,16 @@ class UserConcrete extends React.Component {
     const updateSuccessful = this._toggleUpdateFailed.curry(false);
 
 
-    const updatePromise = commitUpdate(Relay.Store, updateMutation);
+    const updateCancellablePromise = commitUpdate(Relay.Store, updateMutation);
 
-    this.props.cancelOnUnmount(updatePromise);
+    this.props.cancelOnUnmount(updateCancellablePromise);
 
-    updatePromise
+    updateCancellablePromise
         .getPromise()
         .then(updateSuccessful)
-        .then(()=>{this.props.relay.forceFetch()})
+        .then(()=> {
+          this.props.relay.forceFetch()
+        })
         .catch(updateFailed)
         .finally(this.turnOffEditMode)
 
@@ -199,15 +201,13 @@ class UserConcrete extends React.Component {
   }
 
   setUserStateFromProps(props) {
-    const setUserState = (props) => {
-      this.setState({
-        user: {
-          ...props
-        }
-      })
-    };
+    const mergeObjects = (obj1, obj2) => Object.assign({}, obj1, obj2);
 
-    return R.compose(this.turnOffEditMode, setUserState, R.pick(this.editableUserFields), this.getFilteredUserFromProps)(props)
+    const mergeWithUserState = mergeObjects.bind(null, this.state.user);
+
+    const setNewUserState = (user) => this.setState({user});
+
+    return R.compose(this.turnOffEditMode, setNewUserState, mergeWithUserState, R.pick(this.editableUserFields), this.getFilteredUserFromProps)(props)
   } ;
 
   render() {
