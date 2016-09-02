@@ -30,6 +30,7 @@ $ npm run server-babel
 Then navigate to [http://localhost:3000](http://localhost:3000)
 
 TODO:
+- Fix mutations on the client side to avoid force fetching
 - ~~refractor code related to the auth feature~~ 
 - ~~isomorphism~~
 - https
